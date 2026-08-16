@@ -1,0 +1,1 @@
+./fontconvert FreeMonoBold.ttf 8 32 255 >FreeMonoBold8pt8b.h

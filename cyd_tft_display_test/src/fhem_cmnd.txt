@@ -1,0 +1,27 @@
+MQTT publish fhem/cmnd
+
+ie:
+set shelly1_Terasse on
+
+and 
+
+set shelly1_Terasse off
+
+
+status here: mqttGenericBridge/shelly1_Terasse/status
+
+######## in FHEM ########
+define SYS_MQTT MQTT_DEVICE
+attr SYS_MQTT alias MQTT-Command
+attr SYS_MQTT userattr subscribeReading_cmnd
+attr SYS_MQTT subscribeReading_cmnd fhem/cmnd
+#####
+define n_SYS_MQTT_cmnd notify SYS_MQTT:cmnd:.* {}
+#####
+SYS_MQTT:cmnd:.* {
+    if ($EVENT =~ qr/.*?: (.*)/p) {
+        my $cmnd = $1;
+        Log3($NAME, 5, "executed mqtt command: " . $cmnd);
+        fhem($cmnd);
+    }
+}

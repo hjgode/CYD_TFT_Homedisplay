@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../../CYD-Displaytest/CYD-Displaytest"
+		},
+		{
+			"name": "CYD-touch",
+			"path": "../../CYD-touch"
+		},
+		{
+			"name": "cyd_tft_display_test",
+			"path": "."
+		}
+	],
+	"settings": {}
+}

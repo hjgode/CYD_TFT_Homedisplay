@@ -1,0 +1,131 @@
+// V1.00, 2024-04-04
+// (C) by Oliver Kuhlemann, cool-web.de
+// Quelle: https://cool-web.de/esp8266-esp32/
+
+#include <Arduino.h>
+
+#include <SPI.h>
+#include <XPT2046_Touchscreen.h>
+#include <TFT_eSPI.h>
+
+SPIClass mySpi = SPIClass(VSPI);                  // SPI-Interface for XPT2046_Touchscreen
+XPT2046_Touchscreen xpt(XPT2046_CS, XPT2046_IRQ); // create an XPT object (Digitizer)
+
+TFT_eSPI tft = TFT_eSPI();                        // create an TFT object (TFT-Display)
+
+
+// read position of XPT digitizer and corresponding TFT position
+void xptPosition (uint16_t *xptX, uint16_t *xptY, uint8_t *xptZ, uint16_t *tftX, uint16_t *tftY) {
+  uint16_t x, y; uint8_t z;  // XPT
+  uint16_t tx, ty;           // TFT
+
+  float xx = (XPT2046_XMAX - XPT2046_XMIN); // width XPT-Points
+  float yy = (XPT2046_YMAX - XPT2046_YMIN); // height XPT-Points
+
+  xpt.readData(&x, &y, &z);
+
+  // calc position for TFT display from digitizer position
+  tx = (x / xx * TFT_HEIGHT) - (XPT2046_XMIN / xx * TFT_HEIGHT); // TFT_HEIGHT=320
+  ty = (y / yy * TFT_WIDTH) - (XPT2046_YMIN / yy * TFT_WIDTH);   // TFT_WIDTH=240
+
+  // avoid invalid values
+  if (tx < 0) tx = 0;
+  if (ty < 0) ty = 0;
+  if (tx > TFT_HEIGHT-1) tx = TFT_HEIGHT-1;
+  if (ty > TFT_WIDTH-1) ty = TFT_WIDTH-1;
+
+	*xptX = x;
+  *xptY = y;
+  *xptZ = z;
+  *tftX = tx;
+  *tftY = ty;
+}
+
+
+void setup() {
+  Serial.begin(115200);
+
+  // Start the SPI for the touch screen and init the XPT2046 library
+  mySpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
+  xpt.begin(mySpi);
+  xpt.setRotation(1); // landscape, USB ports right bottom
+
+  tft.init();
+  tft.setRotation(1); // landscape, USB ports right bottom
+
+  tft.fillScreen(TFT_BLACK); // clear screen
+
+  int y=60; int lh=30; // y-pos 1. line, line-height
+  
+  tft.drawCentreString("Touch Screen to Start", TFT_HEIGHT/2, y, 4); y+=lh*2;
+  tft.drawCentreString("Then shadow LDR and",   TFT_HEIGHT/2, y, 4); y+=lh;
+  tft.drawCentreString("tap for next mode...",  TFT_HEIGHT/2, y, 4); y+=lh;
+
+  analogSetAttenuation(ADC_0db);    // Increase read sensitivity of light sensor
+  pinMode(LDR_PIN, INPUT);
+}
+
+
+void loop() {
+  uint16_t xptX, xptY, tftX, tftY; 
+  uint8_t xptZ;
+
+  uint16_t xptX_max = 0;
+  uint16_t xptY_max = 0;
+  uint16_t xptX_min = 4095;
+  uint16_t xptY_min = 4095;
+
+  while (1) {
+    if (xpt.touched()) { // if screen tapped
+      // get position for XPT digitizer and TFT
+      xptPosition (&xptX, &xptY, &xptZ, &tftX, &tftY);
+
+      if (xptX > xptX_max) xptX_max = xptX;
+      if (xptY > xptY_max) xptY_max = xptY;
+      if (xptX < xptX_min) xptX_min = xptX;
+      if (xptY < xptY_min) xptY_min = xptY;
+
+      
+      // write values to display
+      tft.fillScreen(TFT_BLACK);  // clear screen
+      tft.setTextColor(TFT_WHITE, TFT_BLACK);
+      int y=30; int lh=30; // y-pos 1. line, line-height
+
+      String strg = "Pressure = " + String(xptZ);
+      tft.drawCentreString(strg, TFT_HEIGHT/2, y, 4); y+=lh;
+
+      strg = "XPT_X = " + String(xptX) + ", TFT_X = " + String(tftX);
+      tft.drawCentreString(strg, TFT_HEIGHT/2, y, 4); y+=lh;
+      
+      strg = "XPT_Y = " + String(xptY) + ", TFT_Y = " + String(tftY);
+      tft.drawCentreString(strg, TFT_HEIGHT/2, y, 4); y+=lh;
+
+      strg = "XPT_X = " + String(xptX_min) + " ... " + String(xptX_max);
+      tft.drawCentreString(strg, TFT_HEIGHT/2, y, 4); y+=lh;
+
+      strg = "XPT_Y = " + String(xptY_min) + " ... " + String(xptY_max);
+      tft.drawCentreString(strg, TFT_HEIGHT/2, y, 4); y+=lh;
+
+
+      // check LDR-value and if LDR is pitch dark, exit loop and go on with next mode
+      int ldr = analogRead(LDR_PIN);
+      strg = "Light Sensor = " + String(ldr);
+      tft.drawCentreString(strg, TFT_HEIGHT/2, y, 4); y+=lh;
+      Serial.printf("LDR %i\n", ldr);
+
+      if (ldr > 500) break;
+
+      delay(100);
+    }
+  } // end while
+  
+  tft.fillScreen(TFT_BLACK);  //CLS   
+
+  while (1) {
+      xptPosition (&xptX, &xptY, &xptZ, &tftX, &tftY);
+
+      // set a pixel on touched position
+      tft.drawPixel(tftX, tftY, TFT_YELLOW);
+  }
+
+}
