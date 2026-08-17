@@ -27,8 +27,11 @@ uint8_t xptZ;
 //#include "ringmeter.h"
 #include "toggle_switch.h"
 toggle_switch tSwitch;
+toggle_switch tSwitch2;
 // Licht Terasse1
 bool stateLichtTerasse1 = false;
+// Licht Terasse2
+bool stateLichtTerasse2 = false;
 
 #include "utils.h"
 
@@ -171,13 +174,21 @@ void drawScreen2(){
   tft.fillScreen(TFT_BLACK);
   setFontNormal();
   tft.setTextColor(TFT_WHITE);
+
   tft.setCursor(10, 30);
   tft.print("Terrasse 1");
+
+  tft.setCursor(10, 30+30);
+  tft.print("Terrasse 2");
 
 //  toggle_switch tSwitch;
   tSwitch.initSwitch(&tft, 216, 12, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
   tSwitch.setFHEMdevice("shelly1_Terasse");
   tSwitch.drawButton(stateLichtTerasse1);
+
+  tSwitch2.initSwitch(&tft, 216, 12+30, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
+  tSwitch2.setFHEMdevice("shellyrgbw2_terasse2");
+  tSwitch2.drawButton(stateLichtTerasse2);
   /*
   //x, y, w, h, radius, color
   tft.fillRoundRect(216, 12, 50, 20, 10, TFT_WHITE);
@@ -211,6 +222,29 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     //assign text lines?
     String topicS="";
     topicS+=topic;
+
+    // shellies/shellyrgbw2_E4CB31/color/0 Terasse2 RGBW
+    if (topicS.indexOf("shellyrgbw2_E4CB31")>0){
+      Serial.printf("\nlichtTerasse2 %s\n", msgStr.c_str());
+      if (msgStr.endsWith("off")){
+        Serial.println("lichtTerasse2 ist OFF");
+        stateLichtTerasse1=false;
+      }else{
+        Serial.println("lichtTerasse1 ist ON");
+        stateLichtTerasse1=true;
+      }
+      try
+      {
+        /* code */
+        tSwitch2.setState(stateLichtTerasse1);
+      }
+      catch(const std::exception& e)
+      {
+        Serial.println(e.what());
+      }
+      
+      return;
+    }
 
     // shellies/shelly1-ABF975/relay/0
     if (topicS.indexOf("shelly1-ABF975")>0){
@@ -306,7 +340,9 @@ void connectWiFi(){
         delay(200);
     }
     mqttClient.subscribe("display1/#");
-    mqttClient.subscribe("shellies/shelly1-ABF975/relay/0");// ("fhem/licht_terasse1"); 
+    mqttClient.subscribe("shellies/shelly1-ABF975/relay/0"); ////licht_terasse1
+    mqttClient.subscribe("shellies/shellyrgbw2_E4CB31/color/0"); //shellyrgbw2_terasse2
+    //shellyrgbw2_E4CB31/color/0 [on|off]
 }
 
 void mqttSendFHEMcmnd(String cmnd){
@@ -385,7 +421,7 @@ unsigned long lastMillis=millis();
 const int DEBOUNCE_DELAY = 500;
 unsigned long lastDebounceTime = 0;
 
-bool toggleSwitch1(toggle_switch* tsw){
+bool toggleSwitch(toggle_switch* tsw){
   if (tsw == nullptr)
     return false;
   //only toggle if time elapsed...
@@ -420,9 +456,11 @@ void loop() {
     if(currentScreen==2){
         if (tSwitch.contains(tftX, tftY)){
           Serial.println("Toggle Switch hit");
-          toggleSwitch1(&tSwitch);
-          //toggleSwitch1();
-          
+          toggleSwitch(&tSwitch);          
+        }
+        if (tSwitch2.contains(tftX, tftY)){
+          Serial.println("Toggle Switch2 hit");
+          toggleSwitch(&tSwitch2);          
         }
     }
     if(tftY>210)
