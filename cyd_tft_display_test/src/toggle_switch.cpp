@@ -2,7 +2,7 @@
 
 toggle_switch::toggle_switch(void){
   currstate = false;
-  
+  _fhemDevice="unset";
 }
 
 bool toggle_switch::getState(){
@@ -44,6 +44,13 @@ void toggle_switch::drawButton(){
   _gfx->drawRoundRect( _x, _y, _w, _h, r, _outlinecolor);
   _gfx->fillCircle(_x+10, _y+10, 8, _forecolor);
 
+}
+
+String toggle_switch::getFHEMdevice(){
+  return _fhemDevice;
+}
+void toggle_switch::setFHEMdevice(String d){
+  _fhemDevice=d;
 }
 
 void toggle_switch::drawButton(bool OnOff){

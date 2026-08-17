@@ -174,6 +174,7 @@ void drawScreen2(){
 
 //  toggle_switch tSwitch;
   tSwitch.initSwitch(&tft, 216, 12, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
+  tSwitch.setFHEMdevice("shelly1_Terasse");
   tSwitch.drawButton(stateLichtTerasse1);
   /*
   //x, y, w, h, radius, color
@@ -322,6 +323,13 @@ void mqttSendFHEMcmnd(String cmnd){
       Serial.println("mqttClient connect failed");
     }
   }
+}
+
+void fhemSwitchOnOff(String sDevice, bool OnOff){
+  String sOnOff=OnOff?" on":" off";
+  String msg="set " + sDevice + sOnOff;
+  Serial.print(msg);
+  mqttSendFHEMcmnd(msg);
 }
 
 void SwitchOn(){
@@ -521,10 +529,36 @@ void setup(void) {
 }
 
 unsigned long lastMillis=millis();
-bool terasse1_last_state=false;
-bool terasse1_curr_state=false;
+//UNUSED bool terasse1_last_state=false;
+//UNUSED bool terasse1_curr_state=false;
 const int DEBOUNCE_DELAY = 500;
 unsigned long lastDebounceTime = 0;
+
+bool toggleSwitch1(toggle_switch* tsw){
+  if (tsw == nullptr)
+    return false;
+  //only toggle if time elapsed...
+  bool currState=tsw->getState();
+  Serial.printf("\ntoggleSwitch: state=%i\n", currState);
+  if((millis()-lastDebounceTime)> DEBOUNCE_DELAY){
+    Serial.printf("\ntoggleSwitch: time OK: %i\n", lastDebounceTime);
+    lastDebounceTime=millis();
+    bool newState = tsw->toggle();
+    if(newState){
+      fhemSwitchOnOff(tsw->getFHEMdevice(), true);
+      //SwitchOn();
+    }else
+    {
+      fhemSwitchOnOff(tsw->getFHEMdevice(), false);
+      //SwitchOff();
+    } 
+  }
+  else{
+    Serial.printf("\ntoggleSwitch: time not OK!: %i\n", lastDebounceTime);
+  }
+  return currState;
+
+}
 
 bool toggleSwitch1(){
   //only toggle if time elapsed...
@@ -558,7 +592,8 @@ void loop() {
     if(currentScreen==2){
         if (tSwitch.contains(tftX, tftY)){
           Serial.println("Toggle Switch hit");
-          toggleSwitch1();
+          toggleSwitch1(&tSwitch);
+          //toggleSwitch1();
           
         }
     }

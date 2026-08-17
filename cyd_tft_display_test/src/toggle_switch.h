@@ -13,10 +13,13 @@ class toggle_switch{
     void setState(bool);
     bool getState();
     bool isClicked();
+    void setFHEMdevice(String);
+    String getFHEMdevice();
     
  private:
   TFT_eSPI *_gfx;
   bool _state;
+  String _fhemDevice;
   int16_t  _x, _y; // Coordinates of top-left corner of button
   uint16_t _w, _h;   // Width and height of button
   uint16_t _outlinecolor, _fillcolor, _forecolor;
