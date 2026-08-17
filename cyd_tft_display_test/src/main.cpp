@@ -30,6 +30,8 @@ toggle_switch tSwitch;
 // Licht Terasse1
 bool stateLichtTerasse1 = false;
 
+#include "utils.h"
+
 // Touch
 #define CS_PIN XPT2046_CS
 // The TIRQ interrupt signal must be used for this example.
@@ -326,122 +328,13 @@ void mqttSendFHEMcmnd(String cmnd){
 }
 
 void fhemSwitchOnOff(String sDevice, bool OnOff){
+  //String msg="set shelly1_Terasse on";
   String sOnOff=OnOff?" on":" off";
   String msg="set " + sDevice + sOnOff;
   Serial.print(msg);
   mqttSendFHEMcmnd(msg);
 }
-
-void SwitchOn(){
-  String msg="set shelly1_Terasse on";
-  Serial.print(msg);
-  mqttSendFHEMcmnd(msg);
-}
-void SwitchOff(){
-  String msg="set shelly1_Terasse off";
-  Serial.print(msg);
-  mqttSendFHEMcmnd(msg);
-}
     
-
-void set_BL(uint8_t brightness=50){
-  //PWM on TFT_BL ????
-/*  pinMode(TFT_BL, OUTPUT);
-  uint8_t ledChannel = SOC_LEDC_CHANNEL_NUM;
-  ledcAttachPin(TFT_BL, ledChannel);
-  ledcSetup(1, 25000, 8);
-  ledcWrite(1, 128);
-*/  
-    esp_err_t err;
-      ledc_timer_config_t ledc_timer = {
-        .speed_mode       = LEDC_LOW_SPEED_MODE,
-        .duty_resolution  = LEDC_TIMER_13_BIT,
-        .timer_num        = LEDC_TIMER_0,
-        .freq_hz          = 4000,  // Set output frequency at 4 kHz
-        .clk_cfg          = LEDC_AUTO_CLK,
-    };
-    //ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
-    // Prepare and then apply the LEDC PWM channel configuration
-    err=ledc_timer_config(&ledc_timer);
-    if (err != ESP_OK)
-      Serial.println("ledc_timer_config FAILD"); 
-
-    ledc_channel_config_t ledc_channel = {
-        .gpio_num       = TFT_BL,
-        .speed_mode     = LEDC_LOW_SPEED_MODE,
-        .channel        = LEDC_CHANNEL_0,
-        .intr_type      = LEDC_INTR_DISABLE,
-        .timer_sel      = LEDC_TIMER_0,
-        .duty           = 0, // Set duty to 0%
-        .hpoint         = 0,
-        .flags          = { .output_invert = false },
-    };
-//   ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
-    err = ledc_channel_config(&ledc_channel);
-    if (err != ESP_OK)
-      Serial.println("ledc_channel_config FAILD"); 
-       // Set duty to 50%
-    uint32_t duty = 8192;
-    if (brightness<0)
-        duty=0;
-    else if(brightness<=25)
-      duty=2048;
-    else if (brightness<=50)
-      duty=4096;
-    else if(brightness<=75)
-      duty=4096+2048;
-    else 
-      duty=4096;
-
-    duty = 8192 * (brightness / 100.0); //with 100 instead of 100.0 always get duty=0 !!!
- //    ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty));
-    err = ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty);
-    if (err != ESP_OK)
-      Serial.println("ledc_set_duty FAILD"); 
-    else
-      Serial.printf("\nduty cycle set to %i\n", duty);
-    //(4096) // Set duty to 50%. (2 ** 13) * 50% = 4096
-
-    // Update duty to apply the new value
-    //ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
-    err=ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
-    if (err != ESP_OK)
-      Serial.println("ledc_update_duty FAILD"); 
-}
-
-//from https://github.com/ropg/LVGL_CYD/blob/main/src/LVGL_CYD.cpp
-// RGB-LED
-#define LED_R         4
-#define R_CORRECTION  0.25
-#define LED_G         16
-#define G_CORRECTION  1
-#define LED_B         17
-#define B_CORRECTION  0.4
-#define LED_FREQ      5000
-#define LED_RES       8
-// prevent brief PWM startup flash when LED is never used.
-static bool led_used_r = false;
-static bool led_used_g = false;
-static bool led_used_b = false;
-void led(uint8_t red, uint8_t green, uint8_t blue, bool true_color=true) {
-  // Serial.printf("LED: r=%i, g=%i, b=%i, true=%i\n", red, green, blue, true);
-  if (true_color) {
-    red   = 255 - (red   * R_CORRECTION);
-    green = 255 - (green * G_CORRECTION);
-    blue  = 255 - (blue  * B_CORRECTION);
-  } else {
-    red   = 255 - red;
-    green = 255 - green;
-    blue  = 255 - blue;
-  }
-  if (red < 255)   led_used_r = true;
-  if (green < 255) led_used_g = true;
-  if (blue < 255)  led_used_b = true;
-  if (led_used_r) analogWrite(LED_R, red);
-  if (led_used_g) analogWrite(LED_G, green);
-  if (led_used_b) analogWrite(LED_B, blue);    
-}
-
 int get_LDR(){
   pinMode(LDR_PIN, INPUT);
   analogSetAttenuation(ADC_0db);
@@ -450,56 +343,14 @@ int get_LDR(){
   return value;
 }
 
-TFT_eSPI_Button button1;
-
 void setup(void) {
   Serial.begin (115200);
 
   tft.begin();
   
-  set_BL(50);
+  utils::set_BL(50);
 
-  led(0,100,0,false);
-//  set_RGB_LED(0,1,0);
-
-
-  /*
-  TFT_eSPI *gfx, int16_t x1, int16_t y1, uint16_t w, uint16_t h,
-  uint16_t outline, uint16_t fill, uint16_t textcolor,
-  char *label, uint8_t textsize)
-  {
-    _x1           = x1;
-    _y1           = y1;
-    _w            = w;
-    _h            = h;
-    _outlinecolor = outline;
-    _fillcolor    = fill;
-    _textcolor    = textcolor;
-    _textsize     = textsize;
-    _gfx          = gfx;
-    strncpy(_label, label, 9);
-    */
-    //button1.initButton(&tft, tft.width() / 2 - 40, 100, 70, 40, CYAN, BLUE, YELLOW, "Reset", 2);
-
-    button1.initButtonUL(
-        &tft, tft.width() / 2 - 40, tft.height()-30 , //gfx x1 y1
-        60, 20,  //w h
-        TFT_WHITE, //outline
-        TFT_BLUE, //fill
-        TFT_WHITE, //textcolor
-        (char*)"btnText",  1) //text, size (1 to x)
-        ;
-    button1.drawButton();
-
-  /*
-  // configure LED PWM
-  int ledchannel=4;
-  uint32_t uRes=0;
-  uRes=ledcSetup(ledchannel, 5000, 12);
-  Serial.printf("ledcsetup=%i", uRes);
-  ledcAttachPin(TFT_BL, ledchannel);
-  ledcWrite(TFT_BL, 255);
-  */
+  utils::led(0,100,0,false);
 
   tft.setRotation(1);
 
@@ -546,11 +397,9 @@ bool toggleSwitch1(toggle_switch* tsw){
     bool newState = tsw->toggle();
     if(newState){
       fhemSwitchOnOff(tsw->getFHEMdevice(), true);
-      //SwitchOn();
     }else
     {
       fhemSwitchOnOff(tsw->getFHEMdevice(), false);
-      //SwitchOff();
     } 
   }
   else{
@@ -558,27 +407,6 @@ bool toggleSwitch1(toggle_switch* tsw){
   }
   return currState;
 
-}
-
-bool toggleSwitch1(){
-  //only toggle if time elapsed...
-  bool currState=tSwitch.getState();
-  Serial.printf("\ntoggleSwitch: state=%i\n", currState);
-  if((millis()-lastDebounceTime)> DEBOUNCE_DELAY){
-    Serial.printf("\ntoggleSwitch: time OK: %i\n", lastDebounceTime);
-    lastDebounceTime=millis();
-    bool newState = tSwitch.toggle();
-    if(newState){
-      SwitchOn();
-    }else
-    {
-      SwitchOff();
-    } 
-  }
-  else{
-    Serial.printf("\ntoggleSwitch: time not OK!: %i\n", lastDebounceTime);
-  }
-  return currState;
 }
 
 void loop() {
