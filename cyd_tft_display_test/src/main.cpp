@@ -15,6 +15,11 @@
 #include "FreeMonoBold10pt8b.h"
 #include "FreeMonoBold8pt8b.h"
 
+#include "window30green.h"
+#include "window30red.h"
+String FensterSchlafzimmer="Schlafz. ist ";
+String FensterBad="Bad ist ";
+
 // Use hardware SPI
 TFT_eSPI tft = TFT_eSPI();
 
@@ -74,7 +79,7 @@ String myIPText="ip";
 String tempStrings[]={"myText1","myText2","myText3","myText4","myText5","myText6"};
 
 int currentRow=0;
-int currentScreen=1;
+int currentScreen=0;
 
 // read position of XPT digitizer and corresponding TFT position
 void xptPosition (uint16_t *xptX, uint16_t *xptY, uint8_t *xptZ, uint16_t *tftX, uint16_t *tftY) {
@@ -145,8 +150,8 @@ void updateClockLine(){
 
 }
 
-void drawScreen1(){
-//  if (currentScreen==1)
+void drawScreen0(){
+//  if (currentScreen==0)
 //    return;
   tft.fillScreen(TFT_BLACK);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -164,9 +169,45 @@ void drawScreen1(){
   tft.drawString(myIPText, 10, 10 + i * 30, GFXFF);// Print the string name of the font
   
   tft.drawString(myClockText, 160, 10 + i * 30, GFXFF);// Print the string name of the font
-  currentScreen=1;
+  currentScreen=0;
 }
 
+void drawScreen1(){
+  int iLine=0, iLineSpace=40, iOffsetY=12;
+  if (currentScreen==1)
+    return;
+  tft.fillScreen(TFT_BLACK);
+  setFontNormal();
+  tft.setTextColor(TFT_WHITE);
+
+//  tft.setCursor(10, 30);
+//  tft.print("Terrasse 1");
+  tft.drawString("Terasse 1", 10, iLine*iLineSpace+iOffsetY);
+//  toggle_switch tSwitch;
+  tSwitch.initSwitch(&tft, 260, iLine*iLineSpace+iOffsetY, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
+  tSwitch.setFHEMdevice("shelly1_Terasse");
+  tSwitch.drawButton(stateLichtTerasse1);
+
+  iLine++;
+//  tft.setCursor(10, 30+30);
+//  tft.print("Terrasse 2");
+  tft.drawString("Terasse 2", 10, iLine*iLineSpace+iOffsetY);
+  tSwitch2.initSwitch(&tft, 260, iLine*iLineSpace+iOffsetY, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
+  tSwitch2.setFHEMdevice("shellyrgbw2_terasse2");
+  tSwitch2.drawButton(stateLichtTerasse2);
+
+iLine++;
+//  setFontSmall();
+  tft.drawString(FensterSchlafzimmer, 10, iLine*iLineSpace+iOffsetY);
+  tft.pushImage(270,iLine*iLineSpace+iOffsetY,30,30,window30red); //draw 16Bit Image from Progmem
+
+iLine++;
+  tft.drawString(FensterBad, 10, iLine*iLineSpace+iOffsetY);
+  tft.pushImage(270,iLine*iLineSpace+iOffsetY,30,30,window30green); //draw 16Bit Image from Progmem
+
+  //tft.pushImage(x,y,w,h,data) //draw 16Bit Image from Progmem
+  currentScreen=1;
+}
 
 void drawScreen2(){
   if (currentScreen==2)
@@ -175,32 +216,11 @@ void drawScreen2(){
   setFontNormal();
   tft.setTextColor(TFT_WHITE);
 
-  tft.setCursor(10, 30);
-  tft.print("Terrasse 1");
+  tft.drawString(FensterSchlafzimmer, 10, 90-20);
+  tft.drawString(FensterSchlafzimmer, 10, 120-20);
 
-  tft.setCursor(10, 30+30);
-  tft.print("Terrasse 2");
-
-//  toggle_switch tSwitch;
-  tSwitch.initSwitch(&tft, 216, 12, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
-  tSwitch.setFHEMdevice("shelly1_Terasse");
-  tSwitch.drawButton(stateLichtTerasse1);
-
-  tSwitch2.initSwitch(&tft, 216, 12+30, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
-  tSwitch2.setFHEMdevice("shellyrgbw2_terasse2");
-  tSwitch2.drawButton(stateLichtTerasse2);
-  /*
-  //x, y, w, h, radius, color
-  tft.fillRoundRect(216, 12, 50, 20, 10, TFT_WHITE);
-  tft.drawRoundRect(216, 12, 50, 20, 10, TFT_WHITE);
-  tft.fillCircle(226, 22, 8, TFT_SKYBLUE);
-  */
-/*
-bool TFT_eSPI_Button::contains(int16_t x, int16_t y) {
-  return ((x >= _x1) && (x < (_x1 + _w)) &&
-          (y >= _y1) && (y < (_y1 + _h)));
-}
-*/
+  tft.pushImage(180,90-20,30,30,window30red); //draw 16Bit Image from Progmem
+  tft.pushImage(180,120-20,30,30,window30green); //draw 16Bit Image from Progmem
   currentScreen=2;
 }
 
@@ -269,6 +289,33 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       return;
     }
 
+    //fenster schlafzimmer: mqttGenericBridge/HM_5F5A68/state
+    //fenster Bad: mqttGenericBridge/HM_58AD5B/state
+    if (topicS.indexOf("HM_5F5A68") > 0){
+      if(msgStr.endsWith("open")){
+        //Fenster ist offen
+        FensterSchlafzimmer="Schlafz. AUF";
+      }
+      else{
+        //Fenster ist zu
+        FensterSchlafzimmer="Schlafz. ZU";
+      }
+      return;
+    }
+
+    //fenster Bad: mqttGenericBridge/HM_58AD5B/state
+    if (topicS.indexOf("HM_58AD5B") > 0){
+      if(msgStr.endsWith("open")){
+        //Fenster ist offen
+        FensterBad="Bad AUF";
+      }
+      else{
+        //Fenster ist zu
+        FensterBad="Bad ZU";
+      }
+      return;
+    }
+
     if(topicS.indexOf( "clock" )>0){
         myClockText=msgStr;
         myIPText=WiFi.localIP().toString();
@@ -286,11 +333,8 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
 
     }
 
-    //draw data line
-//    if (topicS.indexOf("text")>0)
-//        printMsg(msgStr,tIndex-1);
-    if(currentScreen==1){
-      //drawScreen1();
+    if(currentScreen==0){
+      //drawScreen0();
       updateScreen1Line(tIndex-1);
     }
 /*
@@ -342,6 +386,10 @@ void connectWiFi(){
     mqttClient.subscribe("display1/#");
     mqttClient.subscribe("shellies/shelly1-ABF975/relay/0"); ////licht_terasse1
     mqttClient.subscribe("shellies/shellyrgbw2_E4CB31/color/0"); //shellyrgbw2_terasse2
+    //fenster schlafzimmer
+    mqttClient.subscribe("mqttGenericBridge/HM_5F5A68/state");
+    //fenster bad mqttGenericBridge/HM_58AD5B
+    mqttClient.subscribe("mqttGenericBridge/HM_58AD5B/state");
     //shellyrgbw2_E4CB31/color/0 [on|off]
 }
 
@@ -412,7 +460,7 @@ void setup(void) {
     xpt.begin(mySpi);
     xpt.setRotation(1);
     currentScreen=0;
-    drawScreen1();
+    drawScreen0();
 }
 
 unsigned long lastMillis=millis();
@@ -445,6 +493,14 @@ bool toggleSwitch(toggle_switch* tsw){
 
 }
 
+//an array of drawScreen functions
+void (*draw_screen[])(void) = {
+  drawScreen0,
+  drawScreen1,
+  drawScreen2
+};
+const int MAX_SCREEN=3;
+
 void loop() {
     mqttClient.loop();
   delay(5);
@@ -453,7 +509,7 @@ void loop() {
     // get position for XPT digitizer and TFT
     xptPosition (&xptX, &xptY, &xptZ, &tftX, &tftY);
     Serial.printf("currenScreen=%i\n", currentScreen);
-    if(currentScreen==2){
+    if(currentScreen==1){
         if (tSwitch.contains(tftX, tftY)){
           Serial.println("Toggle Switch hit");
           toggleSwitch(&tSwitch);          
@@ -465,16 +521,33 @@ void loop() {
     }
     if(tftY>210)
     {
-      if (tftX>TFT_WIDTH/2)
-      {
-        if (currentScreen==1){
-          
-          drawScreen2();
+      if((millis()-lastDebounceTime)> DEBOUNCE_DELAY){
+        lastDebounceTime=millis();
+
+        int i=currentScreen; // is 1 or 2
+        if (tftX>TFT_WIDTH/2) //go right
+        {
+          i++;
+          if(i > MAX_SCREEN-1){  // number of elements
+            i--;
+          }
+          /*
+          if (currentScreen==1){          
+            drawScreen1();
+          }
+          */
+        }else{  // go left
+          i--;
+          if (i < 0)
+            i=0;
+          /*
+          if (currentScreen==2){
+            drawScreen0();
+          }
+          */
         }
-      }else{
-        if (currentScreen==2){
-          drawScreen1();
-        }
+        Serial.printf("\nscreen switch to %i\n",i);
+        (*draw_screen[i])();  // screens 1 to x, i is 0 to x-1
       }
   }
     Serial.printf("touch at %i / %i with pressure %i\n", tftX, tftY,xptZ); 
