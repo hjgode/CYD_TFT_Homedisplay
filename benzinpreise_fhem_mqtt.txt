@@ -1,0 +1,33 @@
+BenzinPreise
+
+1_brand
+
+1_street
+
+1_e10_price
+
+1_e10_trend
+
+1_e10_price_min
+
+1_e10_price_max
+
+Supermarkt-Tankstelle
+OTTOSTR.
+2.09
+fällt
+2.09
+2.31
+
+Supermarkt-Tankstelle 2.09
+OTTOSTR.              fällt
+2.09---2.31
+
+mqttmsg ("display1/benzin0_1", "Shell                 ". ReadingsVal('BenzinPreise','0_e10_price', '0.00'));;
+mqttmsg ("display1/benzin0_2", "Mülforterstr.         ". ReadingsVal('BenzinPreise','0_e10_trend', '------'));;
+mqttmsg ("display1/benzin0_3", "min---max ". ReadingsVal('BenzinPreise','0_e10_min', '0.00') . ReadingsVal('BenzinPreise','0_e10_max', '0.00'));;
+
+mqttmsg ("display1/benzin1_1", "Supermarkt-Tankstelle ". ReadingsVal('BenzinPreise','1_e10_price', '0.00'));;
+mqttmsg ("display1/benzin1_2", "Ottostr.              ". ReadingsVal('BenzinPreise','1_e10_trend', '------'));;
+mqttmsg ("display1/benzin1_3", "min---max ". ReadingsVal('BenzinPreise','1_e10_min', '0.00') . ReadingsVal('BenzinPreise','1_e10_max', '0.00'));;
+ 
