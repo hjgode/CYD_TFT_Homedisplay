@@ -302,6 +302,8 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       }
     }
     if(currentScreen==2 && benzinupdate){
+        //force draw
+        currentScreen=1;
       drawScreen2();
       return;
     }
@@ -313,10 +315,13 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
         int pos = cTopic.find(stromtopics[y]);
         if(pos > -1){
           stromupdate=true;
-          stromtexte[y]=cPayload;
+          std::string padded = utils::padLeft(cPayload, 7, ' ');
+          stromtexte[y]=padded;// cPayload;
         }
       }
       if(currentScreen==3 && stromupdate){
+        //force draw
+        currentScreen=2;
         drawScreen3();
         return;
       }
@@ -427,24 +432,6 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       updateScreen1Line(tIndex-1);
     }
   }
-/*
-    if(topicS.indexOf( "text1" )>0)
-        myText1=msgStr;
-    else if(topicS.indexOf( "text2" )>0)
-        myText2=msgStr;
-    else if(topicS.indexOf( "text3" )>0)
-        myText3=msgStr;
-    else if(topicS.indexOf( "text4" )>0)
-        myText4=msgStr;
-    else if(topicS.indexOf( "text5" )>0)
-        myText5=msgStr;
-    else if(topicS.indexOf( "text6" )>0)
-        myText6=msgStr;
-    else if(topicS.indexOf( "clock" )>0)
-        myClockText=msgStr;
-//    else if(topicS.indexOf( "ip" )>0)
-//        myIPText=msgStr;
-*/
 }
 
 WiFiClient wlanclient;
@@ -538,8 +525,8 @@ void setup(void) {
   //tft.setFreeFont(&FreeMonoBold18pt8b);
   tft.setFreeFont(&FreeMonoBold16pt8b);
   
-  // Change the text padding to 20 pixels
-  tft.setTextPadding(310);
+  // Change the text padding to 320 pixels
+  tft.setTextPadding(320);
 
 
   printMsg("ESP32 MQTT Mon");

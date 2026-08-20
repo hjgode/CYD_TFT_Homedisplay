@@ -1,6 +1,34 @@
 #include "utils.h"
 #include <driver/ledc.h>
 
+std::string utils::padLeft(const std::string& str, size_t totalLength, char padChar) {    
+    if (str.length() >= totalLength) 
+        return str;    
+    return std::string(totalLength - str.length(), padChar) + str;
+}
+
+std::string utils::padTo(std::string &str, const size_t num, const char paddingChar)
+{
+    if(num > str.size())
+        str.insert(0, num - str.size(), paddingChar);
+    return str;
+}
+
+void utils::getLeftPaddingString(std::string &str, int n, char padChar = ' ')
+{
+	if (n <= str.size()) {
+		return;
+	}
+    try{
+    	str.insert(0, n - str.size(), padChar);
+    }      
+    catch(const std::exception& e)
+    {
+        Serial.println(e.what());
+    }
+
+}
+
 void utils::led(uint8_t red, uint8_t green, uint8_t blue, bool true_color=true){
     // Serial.printf("LED: r=%i, g=%i, b=%i, true=%i\n", red, green, blue, true);
     bool led_used_r=false;
