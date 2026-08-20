@@ -164,6 +164,13 @@ void updateClockLine(){
 
 }
 
+void drawFooter(){
+  setFontSmall();
+  int i=7;
+  tft.drawString(myIPText, 10, 10 + i * 30, GFXFF);// Print the string name of the font
+  tft.drawString(myClockText, 160, 10 + i * 30, GFXFF);// Print the string name of the font
+}
+
 void drawScreen0(){
 //  if (currentScreen==0)
 //    return;
@@ -178,11 +185,7 @@ void drawScreen0(){
   for (int i=0;i<6;i++){
     tft.drawString(tempStrings[i], 10, 10 + i * 30, GFXFF);// Print the string name of the font
   }
-  setFontSmall();
-  int i=7;
-  tft.drawString(myIPText, 10, 10 + i * 30, GFXFF);// Print the string name of the font
-  
-  tft.drawString(myClockText, 160, 10 + i * 30, GFXFF);// Print the string name of the font
+  drawFooter();
   currentScreen=0;
 }
 
@@ -226,6 +229,7 @@ iLine++;
     tft.pushImage(270,iLine*iLineSpace+iOffsetY,30,30,window30red); //draw 16Bit Image from Progmem
 
   //tft.pushImage(x,y,w,h,data) //draw 16Bit Image from Progmem
+  drawFooter();
   currentScreen=1;
 }
 
@@ -240,9 +244,10 @@ void drawScreen2(){
   for (int z=0; z<6; z++){
       tft.drawString(benzintexte[z].c_str(), 10, iLine*iLineSpace+iOffsetY);
     iLine++;
-    if(iLine==3)
+    if(iLine==1 || iLine==4 || iLine==6)
       iLine++;
   }
+  drawFooter();
   currentScreen=2;
 }
 
