@@ -14,11 +14,16 @@
 #include "FreeMonoBold16pt8b.h"
 #include "FreeMonoBold10pt8b.h"
 #include "FreeMonoBold8pt8b.h"
+#include "FreeMonoBold12pt8b.h"
+#include "FreeMonoBold14pt8b.h"
 
 #include "window30green.h"
 #include "window30red.h"
 String FensterSchlafzimmer="Schlafz. ist ";
 String FensterBad="Bad ist ";
+
+std::string benzintexte[6];
+std::string benzintopics[6]={"benzin0_1","benzin0_2","benzin0_3","benzin1_1","benzin1_2","benzin1_3"};
 
 // Use hardware SPI
 TFT_eSPI tft = TFT_eSPI();
@@ -130,6 +135,15 @@ void printMsg(String msg, int line){
 void setFontNormal(){
   tft.setFreeFont(&FreeMonoBold16pt8b);
 }
+void setFontMedium(){
+  tft.setFreeFont(&FreeMonoBold10pt8b);
+}
+void setFont12(){
+  tft.setFreeFont(&FreeMonoBold12pt8b);
+}
+void setFont14(){
+  tft.setFreeFont(&FreeMonoBold14pt8b);
+}
 void setFontSmall(){
   tft.setFreeFont(&FreeMonoBold8pt8b);
 }
@@ -199,11 +213,17 @@ void drawScreen1(){
 iLine++;
 //  setFontSmall();
   tft.drawString(FensterSchlafzimmer, 10, iLine*iLineSpace+iOffsetY);
-  tft.pushImage(270,iLine*iLineSpace+iOffsetY,30,30,window30red); //draw 16Bit Image from Progmem
+  if(FensterSchlafzimmer.endsWith("ZU"))
+    tft.pushImage(270,iLine*iLineSpace+iOffsetY,30,30,window30green); //draw 16Bit Image from Progmem
+  else
+    tft.pushImage(270,iLine*iLineSpace+iOffsetY,30,30,window30red); //draw 16Bit Image from Progmem
 
 iLine++;
   tft.drawString(FensterBad, 10, iLine*iLineSpace+iOffsetY);
-  tft.pushImage(270,iLine*iLineSpace+iOffsetY,30,30,window30green); //draw 16Bit Image from Progmem
+  if (FensterBad.endsWith("ZU"))
+    tft.pushImage(270,iLine*iLineSpace+iOffsetY,30,30,window30green); //draw 16Bit Image from Progmem
+  else
+    tft.pushImage(270,iLine*iLineSpace+iOffsetY,30,30,window30red); //draw 16Bit Image from Progmem
 
   //tft.pushImage(x,y,w,h,data) //draw 16Bit Image from Progmem
   currentScreen=1;
@@ -213,26 +233,37 @@ void drawScreen2(){
   if (currentScreen==2)
     return;
   tft.fillScreen(TFT_BLACK);
-  setFontNormal();
+  setFont14();
   tft.setTextColor(TFT_WHITE);
+  int iLine=0, iLineSpace=20, iOffsetY=12;
 
-  tft.drawString(FensterSchlafzimmer, 10, 90-20);
-  tft.drawString(FensterSchlafzimmer, 10, 120-20);
-
-  tft.pushImage(180,90-20,30,30,window30red); //draw 16Bit Image from Progmem
-  tft.pushImage(180,120-20,30,30,window30green); //draw 16Bit Image from Progmem
+  for (int z=0; z<6; z++){
+      tft.drawString(benzintexte[z].c_str(), 10, iLine*iLineSpace+iOffsetY);
+    iLine++;
+    if(iLine==3)
+      iLine++;
+  }
   currentScreen=2;
 }
 
 void mqttCallback(char *topic, byte *payload, unsigned int length) {
     Serial.print ("Message arrived on Topic:");
-    Serial.print (topic);
+    Serial.println (topic);
 
     // Convert payload to string    
     String payloadStr = String((char*)payload);
-    
     String msgStr;
 
+std::string cTopic=topic;
+char chPayload[length+1]; for (int a=0; a<length+1; a++){chPayload[a]='\0';}
+strncpy(chPayload, (char*)payload, length);
+std::string cPayload(chPayload);
+for (int y=0;y<6;y++){
+  int pos = cTopic.find(benzintopics[y]);
+  if(pos > -1){
+    benzintexte[y]=cPayload;
+  }
+}
     for(int i=0;i<length;i++){
         msgStr += (char)payload[i];
     }
@@ -243,6 +274,11 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     String topicS="";
     topicS+=topic;
 
+    //BenzinPreise?
+    if(topicS.indexOf("BenzinPreise")>0){
+      //return;
+    }
+    
     // shellies/shellyrgbw2_E4CB31/color/0 Terasse2 RGBW
     if (topicS.indexOf("shellyrgbw2_E4CB31")>0){
       Serial.printf("\nlichtTerasse2 %s\n", msgStr.c_str());
@@ -323,7 +359,8 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     }
 
     //get last char
-    topicS.toInt();
+//    topicS.toInt();
+  if(topicS.indexOf("text")>0){
     char lastChar=topicS[strlen(topic) - 1];
     int tIndex = String(lastChar).toInt();
     //store string in list
@@ -332,11 +369,11 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       //update text on Screen 1?
 
     }
-
     if(currentScreen==0){
       //drawScreen0();
       updateScreen1Line(tIndex-1);
     }
+  }
 /*
     if(topicS.indexOf( "text1" )>0)
         myText1=msgStr;
@@ -391,6 +428,7 @@ void connectWiFi(){
     //fenster bad mqttGenericBridge/HM_58AD5B
     mqttClient.subscribe("mqttGenericBridge/HM_58AD5B/state");
     //shellyrgbw2_E4CB31/color/0 [on|off]
+//    mqttClient.subscribe("mqttGenericBridge/BenzinPreise/#");
 }
 
 void mqttSendFHEMcmnd(String cmnd){
