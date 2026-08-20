@@ -25,6 +25,9 @@ String FensterBad="Bad ist ";
 std::string benzintexte[6];
 std::string benzintopics[6]={"benzin0_1","benzin0_2","benzin0_3","benzin1_1","benzin1_2","benzin1_3"};
 
+std::string stromtexte[3];
+std::string stromtopics[3]={"Power","DayAktuell","DayLast"};
+
 // Use hardware SPI
 TFT_eSPI tft = TFT_eSPI();
 
@@ -251,6 +254,31 @@ void drawScreen2(){
   currentScreen=2;
 }
 
+void drawScreen3(){
+  if (currentScreen==3)
+    return;
+  tft.fillScreen(TFT_BLACK);
+  setFontNormal();
+  tft.setTextColor(TFT_WHITE);
+  int iLine=0, iLineSpace=30, iOffsetY=12;
+
+  tft.drawString("Aktuell: ", 10, iLine*iLineSpace+iOffsetY);
+  iLine++;
+  tft.drawString("Heute: ", 10, iLine*iLineSpace+iOffsetY);
+  iLine++;
+  tft.drawString("Gestern: ", 10, iLine*iLineSpace+iOffsetY);
+
+//   tft.drawRightString("Hello, World!", 240, 20, 2); // Draw string aligned to the right at x=240, y=20 with font type 2
+  iLine=0;
+  for (int z=0; z<3; z++){
+//      tft.drawRightString((char*)stromtexte[z].c_str(),150,iLine*iLineSpace+iOffsetY);
+      tft.drawString(stromtexte[z].c_str(), 170, iLine*iLineSpace+iOffsetY);
+    iLine++;
+  }
+  drawFooter();
+  currentScreen=3;
+}
+
 void mqttCallback(char *topic, byte *payload, unsigned int length) {
     Serial.print ("Message arrived on Topic:");
     Serial.println (topic);
@@ -259,16 +287,41 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     String payloadStr = String((char*)payload);
     String msgStr;
 
-std::string cTopic=topic;
-char chPayload[length+1]; for (int a=0; a<length+1; a++){chPayload[a]='\0';}
-strncpy(chPayload, (char*)payload, length);
-std::string cPayload(chPayload);
-for (int y=0;y<6;y++){
-  int pos = cTopic.find(benzintopics[y]);
-  if(pos > -1){
-    benzintexte[y]=cPayload;
-  }
-}
+    //Benzin
+    bool benzinupdate=false;
+    std::string cTopic=topic;
+    char chPayload[length+1]; for (int a=0; a<length+1; a++){chPayload[a]='\0';}
+    strncpy(chPayload, (char*)payload, length);
+    std::string cPayload(chPayload);
+    
+    for (int y=0;y<6;y++){
+      int pos = cTopic.find(benzintopics[y]);
+      if(pos > -1){
+        benzinupdate=true;
+        benzintexte[y]=cPayload;
+      }
+    }
+    if(currentScreen==2 && benzinupdate){
+      drawScreen2();
+      return;
+    }
+
+    //Strom
+    bool stromupdate=false;
+    if(cTopic.find("Strom")){
+      for (int y=0;y<3;y++){
+        int pos = cTopic.find(stromtopics[y]);
+        if(pos > -1){
+          stromupdate=true;
+          stromtexte[y]=cPayload;
+        }
+      }
+      if(currentScreen==3 && stromupdate){
+        drawScreen3();
+        return;
+      }
+    }
+
     for(int i=0;i<length;i++){
         msgStr += (char)payload[i];
     }
@@ -279,11 +332,6 @@ for (int y=0;y<6;y++){
     String topicS="";
     topicS+=topic;
 
-    //BenzinPreise?
-    if(topicS.indexOf("BenzinPreise")>0){
-      //return;
-    }
-    
     // shellies/shellyrgbw2_E4CB31/color/0 Terasse2 RGBW
     if (topicS.indexOf("shellyrgbw2_E4CB31")>0){
       Serial.printf("\nlichtTerasse2 %s\n", msgStr.c_str());
@@ -540,9 +588,10 @@ bool toggleSwitch(toggle_switch* tsw){
 void (*draw_screen[])(void) = {
   drawScreen0,
   drawScreen1,
-  drawScreen2
+  drawScreen2,
+  drawScreen3
 };
-const int MAX_SCREEN=3;
+const int MAX_SCREEN=4;
 
 void loop() {
     mqttClient.loop();
