@@ -58,7 +58,7 @@ bool stateLichtTerasse2 = false;
 #define TIRQ_PIN    XPT2046_IRQ
 XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrupt enabled polling
 
-#ifndef LOAD_GXFF
+#ifndef LOAD_GFXFF
 #define LOAD_GFXFF
 #endif
 
@@ -249,11 +249,18 @@ void drawScreen2(){
   int iLine=0, iLineSpace=20, iOffsetY=12;
 
   for (int z=0; z<6; z++){
+    if(z==0 || z==3){
+      tft.setTextColor(TFT_YELLOW);
+    }
+    else{
+      tft.setTextColor(TFT_WHITE);
+    }
       tft.drawString(benzintexte[z].c_str(), 10, iLine*iLineSpace+iOffsetY);
     iLine++;
     if(iLine==1 || iLine==4 || iLine==6)
       iLine++;
   }
+  tft.setTextColor(TFT_WHITE);
   drawFooter();
   currentScreen=2;
 }
@@ -262,11 +269,14 @@ void updateStromLine(String newStr, int line){
     int iLine=0, iLineSpace=30, iOffsetY=12;
     iLine=line;
     setFontNormal();
+    tft.setTextColor(TFT_YELLOW);
     tft.setTextPadding(150);
     tft.drawString(newStr, 170, iLine*iLineSpace+iOffsetY);
+    tft.setTextColor(TFT_WHITE);
     drawFooter();
 }
 
+//STROM
 void drawScreen3(){
   if (currentScreen==3)
     return;
@@ -283,11 +293,13 @@ void drawScreen3(){
 
 //   tft.drawRightString("Hello, World!", 240, 20, 2); // Draw string aligned to the right at x=240, y=20 with font type 2
   iLine=0;
+  tft.setTextColor(TFT_YELLOW);
   for (int z=0; z<3; z++){
 //      tft.drawRightString((char*)stromtexte[z].c_str(),150,iLine*iLineSpace+iOffsetY);
       tft.drawString(stromtexte[z].c_str(), 170, iLine*iLineSpace+iOffsetY);
     iLine++;
   }
+  tft.setTextColor(TFT_WHITE);
   drawFooter();
   currentScreen=3;
 }
@@ -300,7 +312,10 @@ void drawScreen4(){
   setFont12();
   tft.setTextColor(TFT_WHITE);
   button1.initButton(&tft, 28, 36, 120, 36, 0xC5F7, 0x1B9B, TFT_WHITE);
-  button1.drawButton("Button");
+  button1.drawButton("Hell 1");
+
+  button2.initButton(&tft, 28, 80, 120, 36, 0xC5F7, 0x1B9B, TFT_WHITE);
+  button2.drawButton("Hell 2");
 
   drawFooter();
   currentScreen=4;
@@ -640,6 +655,11 @@ void loop() {
     if(currentScreen==4){
       if(button1.contains(tftX,tftY)){
         Serial.println("Button1 hit");
+        utils::set_BL(50);
+      }
+      if(button2.contains(tftX,tftY)){
+        Serial.println("Button2 hit");
+        utils::set_BL(100);
       }
     }
     if(tftY>210)
