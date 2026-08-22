@@ -41,6 +41,10 @@ uint8_t xptZ;
 #include "toggle_switch.h"
 toggle_switch tSwitch;
 toggle_switch tSwitch2;
+#include "mybutton.h"
+myButton button1;
+myButton button2;
+
 // Licht Terasse1
 bool stateLichtTerasse1 = false;
 // Licht Terasse2
@@ -254,6 +258,15 @@ void drawScreen2(){
   currentScreen=2;
 }
 
+void updateStromLine(String newStr, int line){
+    int iLine=0, iLineSpace=30, iOffsetY=12;
+    iLine=line;
+    setFontNormal();
+    tft.setTextPadding(150);
+    tft.drawString(newStr, 170, iLine*iLineSpace+iOffsetY);
+    drawFooter();
+}
+
 void drawScreen3(){
   if (currentScreen==3)
     return;
@@ -277,6 +290,21 @@ void drawScreen3(){
   }
   drawFooter();
   currentScreen=3;
+}
+
+void drawScreen4(){
+  //GFXfont *f;
+  if (currentScreen==4)
+    return;
+  tft.fillScreen(TFT_BLACK);
+  setFont12();
+  tft.setTextColor(TFT_WHITE);
+  button1.initButton(&tft, 28, 36, 120, 36, 0xC5F7, 0x1B9B, TFT_WHITE);
+  button1.drawButton("Button");
+
+  drawFooter();
+  currentScreen=4;
+  setFontNormal();
 }
 
 void mqttCallback(char *topic, byte *payload, unsigned int length) {
@@ -317,6 +345,9 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
           stromupdate=true;
           std::string padded = utils::padLeft(cPayload, 7, ' ');
           stromtexte[y]=padded;// cPayload;
+//          if(currentScreen==3){
+//            updateStromLine(padded.c_str(), y);
+//          }
         }
       }
       if(currentScreen==3 && stromupdate){
@@ -576,13 +607,21 @@ void (*draw_screen[])(void) = {
   drawScreen0,
   drawScreen1,
   drawScreen2,
-  drawScreen3
+  drawScreen3,
+  drawScreen4
 };
-const int MAX_SCREEN=4;
+const int MAX_SCREEN=5;
 
+int count=0;
 void loop() {
     mqttClient.loop();
   delay(5);
+  count+=5;
+  if(count > 500){
+    count=0;
+//    std::string s=utils::printHeap();
+//    Serial.print(s.c_str());
+  }
   //get_LDR(); always 6
   if(xpt.touched()){
     // get position for XPT digitizer and TFT
@@ -597,6 +636,11 @@ void loop() {
           Serial.println("Toggle Switch2 hit");
           toggleSwitch(&tSwitch2);          
         }
+    }
+    if(currentScreen==4){
+      if(button1.contains(tftX,tftY)){
+        Serial.println("Button1 hit");
+      }
     }
     if(tftY>210)
     {

@@ -29,10 +29,9 @@ Strom_Hichi2
   statEBZ_BezugDay
   statEBZ_BezugDayLast
 
-mqttmsg ("display1/Strom/Aktuell", ReadingsVal('Strom_Hichi2','eBZ_Power', '0'));; 
-mqttmsg ("display1/Strom/Day", ReadingsVal('Strom_Hichi2','statEBZ_BezugDay', '0'));; 
+mqttmsg ("display1/Strom/Power", ReadingsVal('Strom_Hichi2','eBZ_Power', '0'));;
+mqttmsg ("display1/Strom/DayAktuell", ReadingsVal('Strom_Hichi2','statEBZ_BezugDay', '0'));; 
 mqttmsg ("display1/Strom/DayLast", ReadingsVal('Strom_Hichi2','statEBZ_BezugDayLast', '0'));; 
-
 ############
 
 +*00:05:00 { mqttmsg("display1/clock", strftime("%F %R", localtime));; 
@@ -48,5 +47,8 @@ mqttmsg ("display1/benzin0_3", "min->max ". ReadingsVal('BenzinPreise','0_e10_pr
 mqttmsg ("display1/benzin1_1", "Supermarkt    ". ReadingsVal('BenzinPreise','1_e10_price', '0.00'));;
 mqttmsg ("display1/benzin1_2", "Ottostr.      ". ReadingsVal('BenzinPreise','1_e10_trend', '------'));;
 mqttmsg ("display1/benzin1_3", "min->max ". ReadingsVal('BenzinPreise','1_e10_price_min', '0.00') . "->" . ReadingsVal('BenzinPreise','1_e10_price_max', '0.00'));;
+mqttmsg ("display1/Strom/Power", ReadingsVal('Strom_Hichi2','eBZ_Power', '0'));; 
+mqttmsg ("display1/Strom/DayAktuell", ReadingsVal('Strom_Hichi2','statEBZ_BezugDay', '0'));; 
+mqttmsg ("display1/Strom/DayLast", ReadingsVal('Strom_Hichi2','statEBZ_BezugDayLast', '0'));; 
 
 }

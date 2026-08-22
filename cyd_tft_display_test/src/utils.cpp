@@ -1,32 +1,22 @@
 #include "utils.h"
 #include <driver/ledc.h>
 
+std::string utils::printHeap(){
+    char buffer[200];
+    std::snprintf(buffer, sizeof(buffer), "Free Heap: %d bytes\nMin Free Heap: %d bytes\nMax Alloc Block: %d bytes\n", 
+        ESP.getFreeHeap(), ESP.getMinFreeHeap(), ESP.getMaxAllocHeap());
+    /*
+    Serial.printf("Free Heap: %d bytes\n", ESP.getFreeHeap());
+    Serial.printf("Min Free Heap: %d bytes\n", ESP.getMinFreeHeap());
+    Serial.printf("Max Alloc Block: %d bytes\n", ESP.getMaxAllocHeap());
+    */
+   return std::string(buffer);
+}
+
 std::string utils::padLeft(const std::string& str, size_t totalLength, char padChar) {    
     if (str.length() >= totalLength) 
         return str;    
     return std::string(totalLength - str.length(), padChar) + str;
-}
-
-std::string utils::padTo(std::string &str, const size_t num, const char paddingChar)
-{
-    if(num > str.size())
-        str.insert(0, num - str.size(), paddingChar);
-    return str;
-}
-
-void utils::getLeftPaddingString(std::string &str, int n, char padChar = ' ')
-{
-	if (n <= str.size()) {
-		return;
-	}
-    try{
-    	str.insert(0, n - str.size(), padChar);
-    }      
-    catch(const std::exception& e)
-    {
-        Serial.println(e.what());
-    }
-
 }
 
 void utils::led(uint8_t red, uint8_t green, uint8_t blue, bool true_color=true){

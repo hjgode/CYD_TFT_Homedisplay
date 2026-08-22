@@ -20,8 +20,7 @@ class utils{
         static void led(uint8_t red, uint8_t green, uint8_t blue, bool true_color);
         static void set_BL(uint8_t brightness);
         static std::string padLeft(const std::string& str, size_t totalLength, char padChar);
-        static std::string padTo(std::string &str, const size_t num, const char paddingChar);
-        static void getLeftPaddingString(std::string &str, int n, char padChar);
+        static std::string printHeap();
 };
 
 #endif
