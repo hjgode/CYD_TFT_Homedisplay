@@ -60,6 +60,10 @@ bool stateLichtTerasse2 = false;
 XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrupt enabled polling
 
 //TODO: do we need thes 7bit Fonts or just use our custom 8bit fonts only?
+//see also platformio.ini -D 
+//the predefined loaded 7bit fonts do not use much flash memory
+// see /home/hgode/git/cyd_platformio/cyd_tft_display_test/.pio/libdeps/esp32-2432S028Rv3/TFT_eSPI/Fonts/GFXFF/gfxfont.h
+// disabled 7bit font loading by undefined LOAD_ADAFRUIT_GFX_7BIT
 #ifndef LOAD_GFXFF
 #define LOAD_GFXFF
 #endif
