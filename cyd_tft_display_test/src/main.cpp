@@ -11,11 +11,12 @@
 
 //#include "FreeMonoBold20pt8b.h"
 //#include "FreeMonoBold18pt8b.h"
-#include "FreeMonoBold16pt8b.h"
-#include "FreeMonoBold10pt8b.h"
 #include "FreeMonoBold8pt8b.h"
+#include "FreeMonoBold10pt8b.h"
 #include "FreeMonoBold12pt8b.h"
 #include "FreeMonoBold14pt8b.h"
+#include "FreeMono14pt8b.h"
+#include "FreeMonoBold16pt8b.h"
 
 #include "window30green.h"
 #include "window30red.h"
@@ -58,6 +59,7 @@ bool stateLichtTerasse2 = false;
 #define TIRQ_PIN    XPT2046_IRQ
 XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrupt enabled polling
 
+//TODO: do we need thes 7bit Fonts or just use our custom 8bit fonts only?
 #ifndef LOAD_GFXFF
 #define LOAD_GFXFF
 #endif
@@ -66,6 +68,7 @@ XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrup
 
     // Use these when printing or drawing text in GLCD and high rendering speed fonts
     #define GFXFF 1
+/*
     #define GLCD  0
     #define FONT2 2
     #define FONT4 4
@@ -73,7 +76,9 @@ XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrup
     #define FONT7 7
     #define FONT8 8
     #define FF7 &FreeMonoBold18pt7b
+    #define FF1 &FreeMonoBold14pt8b
     #define sFF7 "Mono bold 18"
+*/
 #endif
 
 const char *ssid="Horst1";
@@ -148,9 +153,13 @@ void setFontMedium(){
 void setFont12(){
   tft.setFreeFont(&FreeMonoBold12pt8b);
 }
-void setFont14(){
+void setFontBold14(){
   tft.setFreeFont(&FreeMonoBold14pt8b);
 }
+void setFont14(){
+  tft.setFreeFont(&FreeMono14pt8b);
+}
+
 void setFontSmall(){
   tft.setFreeFont(&FreeMonoBold8pt8b);
 }
@@ -244,23 +253,29 @@ void drawScreen2(){
   if (currentScreen==2)
     return;
   tft.fillScreen(TFT_BLACK);
-  setFont14();
+  setFontBold14();
   tft.setTextColor(TFT_WHITE);
   int iLine=0, iLineSpace=20, iOffsetY=12;
 
   for (int z=0; z<6; z++){
+    //for z=0 or 3 use yellow bold, else use white normal
     if(z==0 || z==3){
+      setFontBold14();
       tft.setTextColor(TFT_YELLOW);
     }
     else{
+      setFont14();
       tft.setTextColor(TFT_WHITE);
     }
-      tft.drawString(benzintexte[z].c_str(), 10, iLine*iLineSpace+iOffsetY);
+    tft.drawString(benzintexte[z].c_str(), 10, iLine*iLineSpace+iOffsetY);
     iLine++;
-    if(iLine==1 || iLine==4 || iLine==6)
+    //add one more line between block
+    if(iLine==1 || iLine==4 || iLine==6){
       iLine++;
+    }
   }
   tft.setTextColor(TFT_WHITE);
+  setFontNormal();
   drawFooter();
   currentScreen=2;
 }
