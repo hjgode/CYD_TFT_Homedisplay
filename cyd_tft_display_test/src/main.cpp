@@ -1,5 +1,7 @@
 #include "driver/ledc.h"
 
+#include <ArduinoOTA.h>
+
 #include <XPT2046_Touchscreen.h>
 #include "SPI.h"
 #include "TFT_eSPI.h"
@@ -9,6 +11,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
+// load custom 8bit Fonts created with fontconvert
 //#include "FreeMonoBold20pt8b.h"
 //#include "FreeMonoBold18pt8b.h"
 #include "FreeMonoBold8pt8b.h"
@@ -18,6 +21,9 @@
 #include "FreeMono14pt8b.h"
 #include "FreeMonoBold16pt8b.h"
 
+//some graphics
+// see https://palsayantan.github.io/Image-to-RGB565/
+// converted from svg using inkscape, save as 30x30 pixel png and uploaded, use 32bit RGBA
 #include "window30green.h"
 #include "window30red.h"
 String FensterSchlafzimmer="Schlafz. ist ";
@@ -45,6 +51,8 @@ toggle_switch tSwitch2;
 #include "mybutton.h"
 myButton button1;
 myButton button2;
+myButton button3;
+myButton button4;
 
 // Licht Terasse1
 bool stateLichtTerasse1 = false;
@@ -330,11 +338,17 @@ void drawScreen4(){
   tft.fillScreen(TFT_BLACK);
   setFont12();
   tft.setTextColor(TFT_WHITE);
-  button1.initButton(&tft, 28, 36, 120, 36, 0xC5F7, 0x1B9B, TFT_WHITE);
+  uint16_t buttonH=28;
+  button1.initButton(&tft, 12, 12, 120, 24, 0xC5F7, 0x1B9B, TFT_WHITE);
   button1.drawButton("Hell 1");
 
-  button2.initButton(&tft, 28, 80, 120, 36, 0xC5F7, 0x1B9B, TFT_WHITE);
+  button2.initButton(&tft, 12, 12+buttonH*1+2, 120, 24, 0xC5F7, 0x1B9B, TFT_WHITE);
   button2.drawButton("Hell 2");
+
+  button3.initButton(&tft, 12, 12+buttonH*2+2, 120, 24, 0xC5F7, 0x1B9B, TFT_WHITE);
+  button3.drawButton("Hell 3");
+  button4.initButton(&tft, 12, 12+buttonH*3+2, 120, 24, 0xC5F7, 0x1B9B, TFT_WHITE);
+  button4.drawButton("Hell 4");
 
   drawFooter();
   currentScreen=4;
@@ -570,7 +584,13 @@ int get_LDR(){
   return value;
 }
 
+uint16_t _brightness=50;
+
 void setup(void) {
+  // Start Preferences
+  _brightness=utils::loadPrefs();
+  utils::set_BL(_brightness);
+  
   Serial.begin (115200);
 
   tft.begin();
@@ -597,13 +617,15 @@ void setup(void) {
   printMsg("ESP32 MQTT Mon");
   //  tft.setFreeFont(NULL);
 
-    connectWiFi();
+  connectWiFi();
 
-    mySpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
-    xpt.begin(mySpi);
-    xpt.setRotation(1);
-    currentScreen=0;
-    drawScreen0();
+  ArduinoOTA.begin();
+
+  mySpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
+  xpt.begin(mySpi);
+  xpt.setRotation(1);
+  currentScreen=0;
+  drawScreen0();
 }
 
 unsigned long lastMillis=millis();
@@ -647,8 +669,10 @@ void (*draw_screen[])(void) = {
 const int MAX_SCREEN=5;
 
 int count=0;
+
 void loop() {
-    mqttClient.loop();
+  ArduinoOTA.handle();
+  mqttClient.loop();
   delay(5);
   count+=5;
   if(count > 500){
@@ -674,9 +698,17 @@ void loop() {
     if(currentScreen==4){
       if(button1.contains(tftX,tftY)){
         Serial.println("Button1 hit");
-        utils::set_BL(50);
+        utils::set_BL(25);
       }
       if(button2.contains(tftX,tftY)){
+        Serial.println("Button2 hit");
+        utils::set_BL(50);
+      }
+      if(button3.contains(tftX,tftY)){
+        Serial.println("Button2 hit");
+        utils::set_BL(75);
+      }
+      if(button4.contains(tftX,tftY)){
         Serial.println("Button2 hit");
         utils::set_BL(100);
       }
@@ -693,25 +725,15 @@ void loop() {
           if(i > MAX_SCREEN-1){  // number of elements
             i--;
           }
-          /*
-          if (currentScreen==1){          
-            drawScreen1();
-          }
-          */
         }else{  // go left
           i--;
           if (i < 0)
             i=0;
-          /*
-          if (currentScreen==2){
-            drawScreen0();
-          }
-          */
         }
         Serial.printf("\nscreen switch to %i\n",i);
         (*draw_screen[i])();  // screens 1 to x, i is 0 to x-1
       }
   }
-    Serial.printf("touch at %i / %i with pressure %i\n", tftX, tftY,xptZ); 
+  Serial.printf("touch at %i / %i with pressure %i\n", tftX, tftY,xptZ); 
   }
 }

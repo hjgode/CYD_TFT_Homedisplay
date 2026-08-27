@@ -21,6 +21,8 @@ class utils{
         static void set_BL(uint8_t brightness);
         static std::string padLeft(const std::string& str, size_t totalLength, char padChar);
         static std::string printHeap();
+        static void savePrefs(uint16_t);
+        static uint16_t loadPrefs();
 };
 
 #endif

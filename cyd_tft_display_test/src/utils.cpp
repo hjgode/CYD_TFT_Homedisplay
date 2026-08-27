@@ -1,5 +1,7 @@
 #include "utils.h"
 #include <driver/ledc.h>
+#include <Preferences.h>
+Preferences prefs;
 
 std::string utils::printHeap(){
     char buffer[200];
@@ -41,6 +43,7 @@ void utils::led(uint8_t red, uint8_t green, uint8_t blue, bool true_color=true){
   if (led_used_b) analogWrite(LED_B, blue);    
 
 }
+
 
 void utils::set_BL(uint8_t brightness=50){
       //PWM on TFT_BL ????
@@ -104,6 +107,35 @@ void utils::set_BL(uint8_t brightness=50){
     //ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
     err=ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
     if (err != ESP_OK)
-      Serial.println("ledc_update_duty FAILD"); 
+      Serial.println("ledc_update_duty FAILD");
+
+    prefs.begin("cyd_home", false);
+    if(prefs.isKey("brightness")){
+        int iSaved=prefs.getUInt("brightness", 50);
+        if (iSaved != brightness)
+            prefs.putUInt("brightness",brightness);
+    }
+    prefs.end();
+}
+
+uint16_t utils::loadPrefs(){
+    uint16_t temp=50;
+    prefs.begin("cyd_home", false);
+    if(prefs.isKey("brightness")){
+        temp =prefs.getUInt("brightness", 50);
+    }else{
+
+    }
+    return temp;
+}
+
+void utils::savePrefs(uint16_t brightness){
+    prefs.begin("cyd_home", false);
+    if(prefs.isKey("brightness")){
+        int iSaved=prefs.getUInt("brightness", 50);
+        if (iSaved != brightness)
+            prefs.putUInt("brightness",brightness);
+    }
+    prefs.end();
 
 }
