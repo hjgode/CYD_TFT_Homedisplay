@@ -44,6 +44,8 @@ XPT2046_Touchscreen xpt(XPT2046_CS, XPT2046_IRQ);
 uint16_t xptX, xptY, tftX, tftY; 
 uint8_t xptZ;
 
+#include "ProgressBar.h"
+
 //#include "ringmeter.h"
 #include "toggle_switch.h"
 toggle_switch tSwitch;
@@ -53,6 +55,7 @@ myButton button1;
 myButton button2;
 myButton button3;
 myButton button4;
+#include "text_value.h"
 
 // Licht Terasse1
 bool stateLichtTerasse1 = false;
@@ -90,7 +93,14 @@ XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrup
     #define FF7 &FreeMonoBold18pt7b
     #define FF1 &FreeMonoBold14pt8b
     #define sFF7 "Mono bold 18"
-*/
+*/    
+    #define FF08b &FreeMonoBold8pt8b
+    #define FF10b &FreeMonoBold10pt8b
+    #define FF12b &FreeMonoBold12pt8b
+    #define FF14b &FreeMonoBold14pt8b
+    #define FF14n &FreeMono14pt8b
+    #define FF16b &FreeMonoBold16pt8b
+
 #endif
 
 const char *ssid="Horst1";
@@ -157,7 +167,7 @@ void printMsg(String msg, int line){
 }
 
 void setFontNormal(){
-  tft.setFreeFont(&FreeMonoBold16pt8b);
+  tft.setFreeFont(FF16b); // &FreeMonoBold16pt8b);
 }
 void setFontMedium(){
   tft.setFreeFont(&FreeMonoBold10pt8b);
@@ -349,6 +359,14 @@ void drawScreen4(){
   button3.drawButton("Hell 3");
   button4.initButton(&tft, 12, 12+buttonH*3+2, 120, 24, 0xC5F7, 0x1B9B, TFT_WHITE);
   button4.drawButton("Hell 4");
+
+  // tft, x1, y1 , x2, y2
+  ProgressBar bar(tft, 12, 12+buttonH*4+2, 120, 24);
+  bar.draw();
+  bar.setProgressPercentage(50.0);
+
+  text_value tValue(tft, 12, 180, 80, 30, "TEST", 35.0, TFT_BLACK, TFT_WHITE, FF14n, FF14b);
+  tValue.drawText();
 
   drawFooter();
   currentScreen=4;
@@ -590,7 +608,7 @@ void setup(void) {
   // Start Preferences
   _brightness=utils::loadPrefs();
   utils::set_BL(_brightness);
-  
+
   Serial.begin (115200);
 
   tft.begin();
@@ -671,6 +689,10 @@ const int MAX_SCREEN=5;
 int count=0;
 
 void loop() {
+  if(WiFi.status()!=WL_CONNECTED){
+    mqttClient.disconnect();
+    connectWiFi();
+  }
   ArduinoOTA.handle();
   mqttClient.loop();
   delay(5);
