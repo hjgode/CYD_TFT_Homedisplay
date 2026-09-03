@@ -51,6 +51,8 @@ uint8_t xptZ;
 #include "toggle_switch.h"
 toggle_switch tSwitch;
 toggle_switch tSwitch2;
+toggle_switch tSwitch3;
+
 #include "mybutton.h"
 myButton button1;
 myButton button2;
@@ -62,6 +64,7 @@ myButton button4;
 bool stateLichtTerasse1 = false;
 // Licht Terasse2
 bool stateLichtTerasse2 = false;
+bool stateLichtVitrine=false;
 
 #include "utils.h"
 
@@ -252,6 +255,12 @@ void drawScreen1(){
   tSwitch2.initSwitch(&tft, 260, iLine*iLineSpace+iOffsetY, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
   tSwitch2.setFHEMdevice("shellyrgbw2_terasse2");
   tSwitch2.drawButton(stateLichtTerasse2);
+
+iLine++;
+  tft.drawString("Vitrine", 10, iLine*iLineSpace+iOffsetY);
+  tSwitch3.initSwitch(&tft, 260, iLine*iLineSpace+iOffsetY, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
+  tSwitch3.setFHEMdevice("lichtvitrine");
+  tSwitch3.drawButton(stateLichtVitrine);
 
 iLine++;
 //  setFontSmall();
@@ -458,7 +467,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
           break;
       }
       zb.putItem(n, zb);
-      Serial.printf("\nZigbee=%s\n", zb.dumpList().c_str());
+//DEBUG      Serial.printf("\nZigbee=%s\n", zb.dumpList().c_str());
     }
 
     // shellies/shellyrgbw2_E4CB31/color/0 Terasse2 RGBW
@@ -482,6 +491,17 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       }
       
       return;
+    }
+
+    // mqttGenericBridge/Licht/lichtVitrine
+    if (topicS.indexOf("lichtVitrine")>0){
+      if (msgStr.endsWith("off")){
+        Serial.println("lichtVitrine ist OFF");
+        stateLichtVitrine=false;
+      }else{
+        Serial.println("lichtVitrine ist ON");
+        stateLichtVitrine=true;
+      }
     }
 
     // shellies/shelly1-ABF975/relay/0
@@ -596,7 +616,7 @@ void connectWiFi(){
     // #zigbee devices
     // mqttGenericBridge/zigbee/zigbee_0xa4c1386fbb4a56db temperature, humidity, comment
     mqttClient.subscribe("mqttGenericBridge/zigbee/#");
-}
+    mqttClient.subscribe("mqttGenericBridge/Licht/#");}
 
 void mqttSendFHEMcmnd(String cmnd){
   //state in mqtt fhem/licht_terasse1
@@ -745,6 +765,10 @@ void loop() {
         if (tSwitch2.contains(tftX, tftY)){
           Serial.println("Toggle Switch2 hit");
           toggleSwitch(&tSwitch2);          
+        }
+        if (tSwitch3.contains(tftX, tftY)){
+          Serial.println("Toggle Switch3 hit");
+          toggleSwitch(&tSwitch3);          
         }
     }
     if(currentScreen==4){
