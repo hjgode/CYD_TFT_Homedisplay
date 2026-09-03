@@ -44,6 +44,7 @@ XPT2046_Touchscreen xpt(XPT2046_CS, XPT2046_IRQ);
 uint16_t xptX, xptY, tftX, tftY; 
 uint8_t xptZ;
 
+#include "zigbee_thermo.h"
 #include "ProgressBar.h"
 
 //#include "ringmeter.h"
@@ -205,6 +206,7 @@ void updateClockLine(){
 void drawFooter(){
   setFontSmall();
   int i=7;
+  tft.drawRect(10, 10+i*30, 240-10, 30,TFT_BLACK); //clear background
   tft.drawString(myIPText, 10, 10 + i * 30, GFXFF);// Print the string name of the font
   tft.drawString(myClockText, 160, 10 + i * 30, GFXFF);// Print the string name of the font
 }
@@ -434,6 +436,31 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     String topicS="";
     topicS+=topic;
 
+    //zigbee
+    if (topicS.indexOf("zigbee")>0){
+      //process zigbee comment, temperature, humidity
+      //ie mqttGenericBridge/zigbee/zigbee_0xa4c1389ca963dfc0/humidity temperature, comment
+      zigbeeType zType = zigbee_thermo::getType(topicS.c_str(), msgStr.c_str());
+      
+      string n=zigbee_thermo::getName(cTopic);
+      Serial.printf("\nZigbee mesg '%s' received, type=%i, name='%s'\n", msgStr.c_str(), zType, n.c_str());
+      zigbee_thermo zb= zb.getItem(n); //zigbee_thermo(n);
+      
+      switch (zType){
+        case temperature:
+          zb.setTemp(atof(msgStr.c_str()));
+          break;
+        case humidity:
+          zb.setHumi(atoi(msgStr.c_str()));
+          break;
+        case comment:
+          zb.setText(msgStr.c_str());
+          break;
+      }
+      zb.putItem(n, zb);
+      Serial.printf("\nZigbee=%s\n", zb.dumpItem().c_str());
+    }
+
     // shellies/shellyrgbw2_E4CB31/color/0 Terasse2 RGBW
     if (topicS.indexOf("shellyrgbw2_E4CB31")>0){
       Serial.printf("\nlichtTerasse2 %s\n", msgStr.c_str());
@@ -566,6 +593,9 @@ void connectWiFi(){
     mqttClient.subscribe("mqttGenericBridge/HM_58AD5B/state");
     //shellyrgbw2_E4CB31/color/0 [on|off]
 //    mqttClient.subscribe("mqttGenericBridge/BenzinPreise/#");
+    // #zigbee devices
+    // mqttGenericBridge/zigbee/zigbee_0xa4c1386fbb4a56db temperature, humidity, comment
+    mqttClient.subscribe("mqttGenericBridge/zigbee/#");
 }
 
 void mqttSendFHEMcmnd(String cmnd){
@@ -686,7 +716,7 @@ void (*draw_screen[])(void) = {
 };
 const int MAX_SCREEN=5;
 
-int count=0;
+int cnt=0;
 
 void loop() {
   if(WiFi.status()!=WL_CONNECTED){
@@ -696,9 +726,9 @@ void loop() {
   ArduinoOTA.handle();
   mqttClient.loop();
   delay(5);
-  count+=5;
-  if(count > 500){
-    count=0;
+  cnt+=5;
+  if(cnt > 500){
+    cnt=0;
 //    std::string s=utils::printHeap();
 //    Serial.print(s.c_str());
   }
