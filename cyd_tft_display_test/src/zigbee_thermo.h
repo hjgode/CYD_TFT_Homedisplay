@@ -28,21 +28,14 @@ class zigbee_thermo{
         int getHumi();
         static zigbee_thermo parseTempHumi(string topic, string payload);
         static string getName(string topic);
+        string getName();
         static zigbeeType getType(string topic, string payload);
         zigbee_thermo putItem(string name, zigbee_thermo zibee_item);
         zigbee_thermo getItem(string n);
 
-        string dumpItem(){
-            string s;
-            std::ostringstream ss;
-            ss << _temp;
-            string sTemp=ss.str();
-            std::ostringstream ss2;
-            ss2 << _humi;
-            string sHumi=ss2.str();
-            s = _name + ", " + _txt + ", "+ sTemp + ", " + sHumi;
-            return s;
-        }
+        string dumpItem();
+        string dumpItem(zigbee_thermo zb);
+        string dumpList();
 
     private:
         string _name;

@@ -458,7 +458,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
           break;
       }
       zb.putItem(n, zb);
-      Serial.printf("\nZigbee=%s\n", zb.dumpItem().c_str());
+      Serial.printf("\nZigbee=%s\n", zb.dumpList().c_str());
     }
 
     // shellies/shellyrgbw2_E4CB31/color/0 Terasse2 RGBW

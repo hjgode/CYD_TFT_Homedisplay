@@ -17,6 +17,10 @@ zigbee_thermo::zigbee_thermo(string name){
     _humi=0;
 }
 
+string zigbee_thermo::getName(){
+    return _name;
+}
+
 string zigbee_thermo::getName(string topic){
     //find the device ID and return it
     //ie mqttGenericBridge/zigbee/zigbee_0xa4c1389ca963dfc0/humidity temperature, comment
@@ -35,11 +39,48 @@ string zigbee_thermo::getName(string topic){
 /// @return 
 zigbee_thermo zigbee_thermo::putItem(string n, zigbee_thermo zb){
     if(_liste.find(n) != _liste.end()){
+        //if exists
+        _liste[n]=zb;
         return _liste[n];
     }else{
+        //add new
         _liste[n]=zb;
         return _liste[n];
     }
+}
+
+string zigbee_thermo::dumpItem(){
+    string s;
+    std::ostringstream ss;
+    ss << _temp;
+    string sTemp=ss.str();
+    std::ostringstream ss2;
+    ss2 << _humi;
+    string sHumi=ss2.str();
+    s = _name + ", " + _txt + ", "+ sTemp + ", " + sHumi;
+    return s;
+}
+string zigbee_thermo::dumpItem(zigbee_thermo zb){
+    string s;
+    std::ostringstream ss;
+    ss << zb.getTemp();
+    string sTemp=ss.str();
+    std::ostringstream ss2;
+    ss2 << zb.getHumi();
+    string sHumi=ss2.str();
+    s = zb.getName() + ", " + zb.getText().c_str() + ", " + sTemp + ", " + sHumi;
+    return s;
+}
+
+string zigbee_thermo::dumpList(){
+    string buf;
+    
+    for (auto v :_liste){
+        // map.first is key, map second is value
+        buf = buf + v.first + ": " + dumpItem(v.second) + "\n";
+    }
+    return buf;
+    
 }
 
 /// @brief try to get a zibee item
