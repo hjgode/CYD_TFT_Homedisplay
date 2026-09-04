@@ -59,6 +59,7 @@ myButton button2;
 myButton button3;
 myButton button4;
 #include "text_value.h"
+#include "text_TempHumi.h"
 
 // Licht Terasse1
 bool stateLichtTerasse1 = false;
@@ -246,6 +247,7 @@ void drawScreen1(){
 //  toggle_switch tSwitch;
   tSwitch.initSwitch(&tft, 260, iLine*iLineSpace+iOffsetY, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
   tSwitch.setFHEMdevice("shelly1_Terasse");
+  tSwitch2.setState(stateLichtTerasse1);
   tSwitch.drawButton(stateLichtTerasse1);
 
   iLine++;
@@ -254,12 +256,14 @@ void drawScreen1(){
   tft.drawString("Terasse 2", 10, iLine*iLineSpace+iOffsetY);
   tSwitch2.initSwitch(&tft, 260, iLine*iLineSpace+iOffsetY, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
   tSwitch2.setFHEMdevice("shellyrgbw2_terasse2");
+  tSwitch2.setState(stateLichtTerasse2);
   tSwitch2.drawButton(stateLichtTerasse2);
 
 iLine++;
   tft.drawString("Vitrine", 10, iLine*iLineSpace+iOffsetY);
   tSwitch3.initSwitch(&tft, 260, iLine*iLineSpace+iOffsetY, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
   tSwitch3.setFHEMdevice("lichtvitrine");
+  tSwitch3.setState(stateLichtVitrine);
   tSwitch3.drawButton(stateLichtVitrine);
 
 iLine++;
@@ -282,6 +286,7 @@ iLine++;
   currentScreen=1;
 }
 
+//Strom
 void drawScreen2(){
   if (currentScreen==2)
     return;
@@ -376,8 +381,10 @@ void drawScreen4(){
   bar.draw();
   bar.setProgressPercentage(50.0);
 
-  text_value tValue(tft, 12, 180, 80, 30, "TEST", 35.0, TFT_BLACK, TFT_WHITE, FF14n, FF14b);
-  tValue.drawText();
+//  text_value tValue(tft, 12, 180, 80, 30, "TEST", 35.0, TFT_BLACK, TFT_WHITE, FF14n, FF14b);
+//  tValue.drawText();
+  text_TempHumi thValue(tft, 12, 180, 80, 30, "TEST", 35.0, 55, TFT_BLACK, TFT_WHITE, FF14n, FF14b);
+  thValue.drawText();
 
   drawFooter();
   currentScreen=4;
@@ -470,11 +477,11 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
 //DEBUG      Serial.printf("\nZigbee=%s\n", zb.dumpList().c_str());
     }
 
-    // shellies/shellyrgbw2_E4CB31/color/0 Terasse2 RGBW
-    if (topicS.indexOf("shellyrgbw2_E4CB31")>0){
-      Serial.printf("\nlichtTerasse2 %s\n", msgStr.c_str());
+    // shellies/shelly1-ABF975/relay/0
+    if (topicS.indexOf("shelly1-ABF975")>0){
+      Serial.printf("\nlichtTerasse1 %s\n", msgStr.c_str());
       if (msgStr.endsWith("off")){
-        Serial.println("lichtTerasse2 ist OFF");
+        Serial.println("lichtTerasse1 ist OFF");
         stateLichtTerasse1=false;
       }else{
         Serial.println("lichtTerasse1 ist ON");
@@ -483,7 +490,30 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       try
       {
         /* code */
-        tSwitch2.setState(stateLichtTerasse1);
+        tSwitch.setState(stateLichtTerasse1);
+      }
+      catch(const std::exception& e)
+      {
+        Serial.println(e.what());
+      }
+      
+      return;
+    }
+
+    // shellies/shellyrgbw2_E4CB31/color/0 Terasse2 RGBW
+    if (topicS.indexOf("shellyrgbw2_E4CB31")>0){
+      Serial.printf("\nlichtTerasse2 %s\n", msgStr.c_str());
+      if (msgStr.endsWith("off")){
+        Serial.println("lichtTerasse2 ist OFF");
+        stateLichtTerasse2=false;
+      }else{
+        Serial.println("lichtTerasse2 ist ON");
+        stateLichtTerasse2=true;
+      }
+      try
+      {
+        /* code */
+        tSwitch2.setState(stateLichtTerasse2);
       }
       catch(const std::exception& e)
       {
@@ -502,22 +532,10 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
         Serial.println("lichtVitrine ist ON");
         stateLichtVitrine=true;
       }
-    }
-
-    // shellies/shelly1-ABF975/relay/0
-    if (topicS.indexOf("shelly1-ABF975")>0){
-      Serial.printf("\nlichtTerasse1 %s\n", msgStr.c_str());
-      if (msgStr.endsWith("off")){
-        Serial.println("lichtTerasse1 ist OFF");
-        stateLichtTerasse1=false;
-      }else{
-        Serial.println("lichtTerasse1 ist ON");
-        stateLichtTerasse1=true;
-      }
       try
       {
         /* code */
-        tSwitch.setState(stateLichtTerasse1);
+        tSwitch3.setState(stateLichtVitrine);
       }
       catch(const std::exception& e)
       {

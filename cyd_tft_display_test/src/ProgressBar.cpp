@@ -7,9 +7,9 @@
 #include "ProgressBar.h"
 
 ProgressBar::ProgressBar(TFT_eSPI& display, int x0, int y0, int w, int h, 
-    int foregroundColor, int backgroundColor, int borderColor) :
+    int foregroundColor, int backgroundColor, int borderColor, int v) :
     _display(display), _x0(x0), _y0(y0), _w(w), _h(h), 
-        _fgColor(foregroundColor), _bgColor(backgroundColor), _bdColor(borderColor) {}
+        _fgColor(foregroundColor), _bgColor(backgroundColor), _bdColor(borderColor), _value(v) {}
 
 void ProgressBar::setForegroundColor(int foregroundColor) {
     _fgColor = foregroundColor;

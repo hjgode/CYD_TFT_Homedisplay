@@ -12,6 +12,17 @@ class myButton{
         bool  currstate; // Button states
         
     public:
+        //default constructor
+        myButton(){
+            _gfx={};
+            _state=false;
+            _x=0; _y=0;
+            _w=0; _h=0;
+            _outlinecolor=TFT_WHITE;
+            _fillcolor=TFT_BLUE;
+            _forecolor=TFT_WHITE;
+            currstate=false;
+        };
         void initButton(TFT_eSPI *gfx, int16_t x, int16_t y, 
                       uint16_t w, uint16_t h, 
                       uint16_t outline, 

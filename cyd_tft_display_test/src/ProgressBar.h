@@ -11,7 +11,7 @@ class ProgressBar {
 public:
 
     ProgressBar(TFT_eSPI& display, int x0, int y0, int w, int h, 
-        int foregroundColor = TFT_GREEN, int backgroundColor = TFT_BLACK, int borderColor = TFT_WHITE);
+        int foregroundColor = TFT_GREEN, int backgroundColor = TFT_BLACK, int borderColor = TFT_WHITE, int v=0);
     void setForegroundColor(int foregroundColor);
     void setBackgroundColor(int backgroundColor);
     void setBorderColor(int borderColor);
