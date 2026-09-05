@@ -19,6 +19,7 @@ void text_TempHumi::drawText(){
     char valtxt[12];
     snprintf(valtxt, 12,  "%0.1f", _temp);
     int iLen = strlen(valtxt);
+    // uint16_t: the width of a string in pixels.
     uint16_t sumX = _display.drawString(String(valtxt), _x0+_w, _y0);
     Serial.printf("\nFirst sumX for Temp str= %i\n", sumX);
     int charWidth=sumX/iLen;

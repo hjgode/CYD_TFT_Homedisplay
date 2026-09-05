@@ -2,7 +2,7 @@
 
 #include "zigbee_thermo.h"
 
-static std::map<string, zigbee_thermo> _liste;
+static zigbee_liste _liste;
 
 zigbee_thermo::zigbee_thermo(){
     _txt="";
@@ -83,6 +83,10 @@ string zigbee_thermo::dumpList(){
     
 }
 
+zigbee_liste zigbee_thermo::getListe(){
+    return _liste;
+}
+
 /// @brief try to get a zibee item
 /// @param n name of the zigbee device
 /// @return the found zigbee device or a new one
@@ -152,6 +156,20 @@ int zigbee_thermo::getHumi(){
 }
 float zigbee_thermo::getTemp(){
     return _temp;
+}
+string zigbee_thermo::getTempStr(){
+    string s;
+    std::ostringstream ss;
+    ss << _temp;
+    string sTemp=ss.str();
+    return sTemp;
+}
+string zigbee_thermo::getHumiStr(){
+    string s;
+    std::ostringstream ss;
+    ss << _humi;
+    string sTemp=ss.str();
+    return sTemp;
 }
 string zigbee_thermo::getText(){
     return _txt;

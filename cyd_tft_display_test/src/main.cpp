@@ -391,6 +391,33 @@ void drawScreen4(){
   setFontNormal();
 }
 
+void drawScreen5(){
+  //GFXfont *f;
+  if (currentScreen==5)
+    return;
+  int iLine=0;
+  tft.fillScreen(TFT_BLACK);
+  setFont12();
+  tft.setTextColor(TFT_WHITE);
+  uint16_t buttonH=28;
+  
+  std::map<string, zigbee_thermo> zbListe = zigbee_thermo::getListe();
+  for (auto item : zbListe ){
+    string sKey=item.first;
+    zigbee_thermo zbx = item.second;
+    //TODO add text_TempHumi
+    string sTemp=zbx.getTempStr();
+    string sHumi=zbx.getHumiStr();
+    text_TempHumi tTH=text_TempHumi(tft, 10, iLine, 80, 24, zbx.getText().c_str(), zbx.getTemp(), zbx.getHumi(), TFT_WHITE, TFT_BLACK, FF14n, FF14b);
+    tTH.drawText();
+    iLine+=24;
+  }
+
+  drawFooter();
+  currentScreen=5;
+  setFontNormal();
+}
+
 void mqttCallback(char *topic, byte *payload, unsigned int length) {
     Serial.print ("Message arrived on Topic:");
     Serial.println (topic);
@@ -750,9 +777,10 @@ void (*draw_screen[])(void) = {
   drawScreen1,
   drawScreen2,
   drawScreen3,
-  drawScreen4
+  drawScreen4,
+  drawScreen5
 };
-const int MAX_SCREEN=5;
+const int MAX_SCREEN=6;
 
 int cnt=0;
 
