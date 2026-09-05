@@ -17,6 +17,8 @@
 #include "FreeMonoBold8pt8b.h"
 #include "FreeMonoBold10pt8b.h"
 #include "FreeMonoBold12pt8b.h"
+#include "FreeMono10pt8b.h"
+#include "FreeMono12pt8b.h"
 #include "FreeMonoBold14pt8b.h"
 #include "FreeMono14pt8b.h"
 #include "FreeMonoBold16pt8b.h"
@@ -29,11 +31,17 @@
 String FensterSchlafzimmer="Schlafz. ist ";
 String FensterBad="Bad ist ";
 
-std::string benzintexte[6];
-std::string benzintopics[6]={"benzin0_1","benzin0_2","benzin0_3","benzin1_1","benzin1_2","benzin1_3"};
+#define MAX_BENZIN_PREISE 9
+std::string benzintexte[MAX_BENZIN_PREISE];
+std::string benzintopics[MAX_BENZIN_PREISE]={"benzin0_1","benzin0_2","benzin0_3",
+  "benzin1_1","benzin1_2","benzin1_3",
+  "benzin2_1","benzin2_2","benzin2_3"};
 
 std::string stromtexte[3];
 std::string stromtopics[3]={"Power","DayAktuell","DayLast"};
+
+std::string wassertexte[2];
+std::string wassertopics[2]={"WasserAktuell","WasserLast"};
 
 // Use hardware SPI
 TFT_eSPI tft = TFT_eSPI();
@@ -101,7 +109,9 @@ XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrup
 */    
     #define FF08b &FreeMonoBold8pt8b
     #define FF10b &FreeMonoBold10pt8b
+    #define FF10  &FreeMono10pt8b
     #define FF12b &FreeMonoBold12pt8b
+    #define FF12  &FreeMono12pt8b
     #define FF14b &FreeMonoBold14pt8b
     #define FF14n &FreeMono14pt8b
     #define FF16b &FreeMonoBold16pt8b
@@ -185,6 +195,9 @@ void setFontBold14(){
 }
 void setFont14(){
   tft.setFreeFont(&FreeMono14pt8b);
+}
+void setFont10(){
+  tft.setFreeFont(FF10);
 }
 
 void setFontSmall(){
@@ -286,31 +299,46 @@ iLine++;
   currentScreen=1;
 }
 
-//Strom
+//Benzinpreise
 void drawScreen2(){
   if (currentScreen==2)
     return;
   tft.fillScreen(TFT_BLACK);
   setFontBold14();
   tft.setTextColor(TFT_WHITE);
-  int iLine=0, iLineSpace=20, iOffsetY=12;
+  int iLine=0, iLineSpace=15, iOffsetY=12;
 
-  for (int z=0; z<6; z++){
+/*
+line 
+0  0 Name       0
+1   1 strasse   1
+2   2 preis     2
+3
+4  0 Name       3
+5   1 strasse   4
+6   2 preis     5
+7
+8  0 Name       6
+9  1 strasse    7
+10  2 preis     8
+
+*/
+  for (int z=0; z<MAX_BENZIN_PREISE; z++){
     //for z=0 or 3 use yellow bold, else use white normal
-    if(z==0 || z==3){
+    if(z==0 || z==3 || z==6){
       setFontBold14();
       tft.setTextColor(TFT_YELLOW);
     }
     else{
-      setFont14();
+      setFont10();
       tft.setTextColor(TFT_WHITE);
     }
     tft.drawString(benzintexte[z].c_str(), 10, iLine*iLineSpace+iOffsetY);
     iLine++;
-    //add one more line between block
-    if(iLine==1 || iLine==4 || iLine==6){
+    //add one more line before new block
+    if(z==0 || z==3 || z==6){
       iLine++;
-    }
+    } 
   }
   tft.setTextColor(TFT_WHITE);
   setFontNormal();
@@ -329,7 +357,7 @@ void updateStromLine(String newStr, int line){
     drawFooter();
 }
 
-//STROM
+//STROM  Wasser
 void drawScreen3(){
   if (currentScreen==3)
     return;
@@ -352,6 +380,21 @@ void drawScreen3(){
       tft.drawString(stromtexte[z].c_str(), 170, iLine*iLineSpace+iOffsetY);
     iLine++;
   }
+
+  int startLine=++iLine;
+  tft.setTextColor(TFT_WHITE);
+  tft.drawString("Wasser: ", 10, iLine*iLineSpace+iOffsetY);
+  iLine++;
+  tft.drawString("Gestern: ", 10, iLine*iLineSpace+iOffsetY);
+  iLine=startLine;
+  tft.setTextColor(TFT_YELLOW);
+  for (int z=0; z<2; z++){
+//      tft.drawRightString((char*)stromtexte[z].c_str(),150,iLine*iLineSpace+iOffsetY);
+      tft.drawString(wassertexte[z].c_str(), 170, iLine*iLineSpace+iOffsetY);
+    iLine++;
+  }
+
+
   tft.setTextColor(TFT_WHITE);
   drawFooter();
   currentScreen=3;
@@ -383,7 +426,7 @@ void drawScreen4(){
 
 //  text_value tValue(tft, 12, 180, 80, 30, "TEST", 35.0, TFT_BLACK, TFT_WHITE, FF14n, FF14b);
 //  tValue.drawText();
-  text_TempHumi thValue(tft, 12, 180, 80, 30, "TEST", 35.0, 55, TFT_BLACK, TFT_WHITE, FF14n, FF14b);
+  text_TempHumi thValue(tft, 12, 180, 80, 30, "TEST", 35.0, 55, TFT_BLACK, TFT_WHITE, FF10, FF14b);
   thValue.drawText();
 
   drawFooter();
@@ -408,9 +451,10 @@ void drawScreen5(){
     //TODO add text_TempHumi
     string sTemp=zbx.getTempStr();
     string sHumi=zbx.getHumiStr();
-    text_TempHumi tTH=text_TempHumi(tft, 10, iLine, 80, 24, zbx.getText().c_str(), zbx.getTemp(), zbx.getHumi(), TFT_WHITE, TFT_BLACK, FF14n, FF14b);
+    text_TempHumi tTH=text_TempHumi(tft, 10, iLine, 190, 24, zbx.getText().c_str(), zbx.getTemp(), zbx.getHumi(), 
+      TFT_WHITE, TFT_BLACK, FF10, FF14b);
     tTH.drawText();
-    iLine+=24;
+    iLine+=26;
   }
 
   drawFooter();
@@ -433,7 +477,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     strncpy(chPayload, (char*)payload, length);
     std::string cPayload(chPayload);
     
-    for (int y=0;y<6;y++){
+    for (int y=0;y<MAX_BENZIN_PREISE;y++){
       int pos = cTopic.find(benzintopics[y]);
       if(pos > -1){
         benzinupdate=true;
@@ -462,6 +506,24 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
         }
       }
       if(currentScreen==3 && stromupdate){
+        //force draw
+        currentScreen=2;
+        drawScreen3();
+        return;
+      }
+    }
+    //wasser
+    bool wasserupdate=false;
+    if(cTopic.find("Wasser")){
+      for (int y=0;y<2;y++){
+        int pos = cTopic.find(wassertopics[y]);
+        if(pos > -1){
+          wasserupdate=true;
+          std::string padded = utils::padLeft(cPayload, 7, ' ');
+          wassertexte[y]=padded;// cPayload;
+        }
+      }
+      if(currentScreen==3 && wasserupdate){
         //force draw
         currentScreen=2;
         drawScreen3();
