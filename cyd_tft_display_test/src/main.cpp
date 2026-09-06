@@ -8,6 +8,9 @@
 //#include <TFT_eWidget.h>
 //#include "Extensions/Button.h"
 
+#include <SPIFFS.h>
+//File file = SPIFFS.open("/test.txt");
+
 #include <WiFi.h>
 #include <PubSubClient.h>
 
@@ -22,6 +25,22 @@
 #include "FreeMonoBold14pt8b.h"
 #include "FreeMono14pt8b.h"
 #include "FreeMonoBold16pt8b.h"
+
+/*
+// In setup()
+  if (!SPIFFS.begin()) {
+    Serial.println("SPIFFS initialisation failed!");
+    while (1) yield(); // Stay here twiddling thumbs waiting
+  }
+  Serial.println("\r\nSPIFFS available!");
+
+if (SPIFFS.begin()) {
+  if (SPIFFS.exists("/NotoSansBold15.vlw") == false) 
+     Serial.print("font_missing")";
+  else
+    tft.loadFont("FreeMono8");  // Load font from SPIFFS
+}
+*/
 
 //some graphics
 // see https://palsayantan.github.io/Image-to-RGB565/
@@ -135,6 +154,22 @@ String tempStrings[]={"myText1","myText2","myText3","myText4","myText5","myText6
 int currentRow=0;
 int currentScreen=0;
 
+void loadFont(){
+  return;
+  //TODO Fix Font Display for vlw fonts, seem to small
+  if (SPIFFS.begin()) {
+    if (SPIFFS.exists("/FreeMonoBold14.vlw") == false){ 
+      Serial.print("\nfont_missing\n");
+    }
+    else{
+      tft.loadFont("FreeMonoBold14");  // Load font from SPIFFS
+      Serial.print("\nFont loaded\n");
+    }
+  }else{
+    Serial.print("\nSPIFFS failed\n");
+  }
+
+}
 // read position of XPT digitizer and corresponding TFT position
 void xptPosition (uint16_t *xptX, uint16_t *xptY, uint8_t *xptZ, uint16_t *tftX, uint16_t *tftY) {
   uint16_t x, y; uint8_t z;  // XPT
@@ -799,8 +834,13 @@ void setup(void) {
   mySpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
   xpt.begin(mySpi);
   xpt.setRotation(1);
+
+  //TEST
+  loadFont();
+
   currentScreen=0;
   drawScreen0();
+
 }
 
 unsigned long lastMillis=millis();
