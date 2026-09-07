@@ -10,6 +10,7 @@
 
 #include <SPIFFS.h>
 //File file = SPIFFS.open("/test.txt");
+//#include <LittleFS.h>
 
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -137,6 +138,42 @@ XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrup
 
 #endif
 
+/*
+VLW fonts in SPIFFS
+FreeMono10.vlw
+FreeMono12.vlw
+FreeMono14.vlw
+FreeMono16.vlw
+FreeMono18.vlw
+FreeMono20.vlw
+FreeMono8.vlw
+FreeMonoBold10.vlw
+FreeMonoBold12.vlw
+FreeMonoBold14.vlw
+FreeMonoBold16.vlw
+FreeMonoBold18.vlw
+FreeMonoBold20.vlw
+FreeMonoBold8.vlw
+
+IBMPlexMono10.vlw
+IBMPlexMono12.vlw
+IBMPlexMono14.vlw
+IBMPlexMono16.vlw
+IBMPlexMono18.vlw
+IBMPlexMono20.vlw
+IBMPlexMono24.vlw
+IBMPlexMono8.vlw
+
+IBMPlexMonoBold8.vlw
+IBMPlexMonoBold10.vlw
+IBMPlexMonoBold12.vlw
+IBMPlexMonoBold14.vlw
+IBMPlexMonoBold16.vlw
+IBMPlexMonoBold18.vlw
+IBMPlexMonoBold20.vlw
+IBMPlexMonoBold24.vlw
+*/
+
 const char *ssid="Horst1";
 const char *passwd = "1234567890123";
 
@@ -157,12 +194,12 @@ int currentScreen=0;
 void loadFont(){
   return;
   //TODO Fix Font Display for vlw fonts, seem to small
-  if (SPIFFS.begin()) {
-    if (SPIFFS.exists("/FreeMonoBold14.vlw") == false){ 
+  if (SPIFFS.begin(true)) {
+    if (SPIFFS.exists("/IBMPlexMonoBold24.vlw") == false){ 
       Serial.print("\nfont_missing\n");
     }
     else{
-      tft.loadFont("FreeMonoBold14");  // Load font from SPIFFS
+      tft.loadFont("IBMPlexMonoBold24");  // Load font from file system no .vlw extension, supports flash and SPIFFS
       Serial.print("\nFont loaded\n");
     }
   }else{
