@@ -191,22 +191,42 @@ String tempStrings[]={"myText1","myText2","myText3","myText4","myText5","myText6
 int currentRow=0;
 int currentScreen=0;
 
-void loadFont(){
-  return;
-  //TODO Fix Font Display for vlw fonts, seem to small
+/// @brief Draw String with spcified vlw font to load from SPIFFS
+/// @param txt text to draw
+/// @param poX position x of upper left 
+/// @param poY position y upper left
+/// @param fontName vlw font name file without extension
+/// @return 
+int16_t drawString(const char *txt , int32_t poX, int32_t poY, char *fontName){
+  std::stringstream ss;
+  ss << "/" << fontName << ".vlw";
+  std::string vlwName=ss.str();
   if (SPIFFS.begin(true)) {
-    if (SPIFFS.exists("/IBMPlexMonoBold24.vlw") == false){ 
+    
+    if (SPIFFS.exists(vlwName.c_str()) == false){ 
       Serial.print("\nfont_missing\n");
     }
     else{
-      tft.loadFont("IBMPlexMonoBold24");  // Load font from file system no .vlw extension, supports flash and SPIFFS
-      Serial.print("\nFont loaded\n");
+      tft.loadFont( fontName);  // Load font from file system no .vlw extension, supports flash and SPIFFS
+      if (tft.fontLoaded)
+        Serial.print("\nFont loaded\n");
+      else
+        Serial.print("\nFont NOT loaded\n");
     }
   }else{
     Serial.print("\nSPIFFS failed\n");
   }
-
+  tft.loadFont(fontName, SPIFFS);
+  if (tft.fontLoaded){
+    Serial.print("\nFont loaded\n");
+  }
+  else{
+    Serial.print("\nFont NOT loaded\n");
+  }
+  int16_t width =  tft.drawString(txt, poX, poY);
+  return width;
 }
+
 // read position of XPT digitizer and corresponding TFT position
 void xptPosition (uint16_t *xptX, uint16_t *xptY, uint8_t *xptZ, uint16_t *tftX, uint16_t *tftY) {
   uint16_t x, y; uint8_t z;  // XPT
@@ -296,6 +316,9 @@ void drawFooter(){
   setFontSmall();
   int i=7;
   tft.drawRect(10, 10+i*30, 240-10, 30,TFT_BLACK); //clear background
+  char *fName=(char *)"FreeMono12";
+//  drawString(myIPText.c_str(), 10, 10 + i * 30, fName);
+//  drawString(myClockText.c_str(), 160, 10 + i * 30, fName);
   tft.drawString(myIPText, 10, 10 + i * 30, GFXFF);// Print the string name of the font
   tft.drawString(myClockText, 160, 10 + i * 30, GFXFF);// Print the string name of the font
 }
@@ -871,9 +894,6 @@ void setup(void) {
   mySpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
   xpt.begin(mySpi);
   xpt.setRotation(1);
-
-  //TEST
-  loadFont();
 
   currentScreen=0;
   drawScreen0();
