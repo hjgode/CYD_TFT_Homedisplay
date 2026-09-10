@@ -2,6 +2,8 @@
 
 #include <ArduinoOTA.h>
 
+#include <ArduinoLog.h>
+
 #include <XPT2046_Touchscreen.h>
 #include "SPI.h"
 #include "TFT_eSPI.h"
@@ -14,18 +16,6 @@
 
 #include <WiFi.h>
 #include <PubSubClient.h>
-
-// load custom 8bit Fonts created with fontconvert
-//#include "FreeMonoBold20pt8b.h"
-//#include "FreeMonoBold18pt8b.h"
-#include "FreeMonoBold8pt8b.h"
-#include "FreeMonoBold10pt8b.h"
-#include "FreeMonoBold12pt8b.h"
-#include "FreeMono10pt8b.h"
-#include "FreeMono12pt8b.h"
-#include "FreeMonoBold14pt8b.h"
-#include "FreeMono14pt8b.h"
-#include "FreeMonoBold16pt8b.h"
 
 /*
 // In setup()
@@ -103,15 +93,36 @@ bool stateLichtVitrine=false;
 #define TIRQ_PIN    XPT2046_IRQ
 XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrupt enabled polling
 
+  // load custom 8bit Fonts created with fontconvert
+  //#include "FreeMonoBold20pt8b.h"
+  //#include "FreeMonoBold18pt8b.h"
+  #include "FreeMonoBold8pt8b.h"
+  #include "FreeMonoBold10pt8b.h"
+  #include "FreeMonoBold12pt8b.h"
+  #include "FreeMono10pt8b.h"
+  #include "FreeMono12pt8b.h"
+  #include "FreeMonoBold14pt8b.h"
+  #include "FreeMono14pt8b.h"
+  #include "FreeMonoBold16pt8b.h"
+
 //TODO: do we need thes 7bit Fonts or just use our custom 8bit fonts only?
 //see also platformio.ini -D 
 //the predefined loaded 7bit fonts do not use much flash memory
 // see /home/hgode/git/cyd_platformio/cyd_tft_display_test/.pio/libdeps/esp32-2432S028Rv3/TFT_eSPI/Fonts/GFXFF/gfxfont.h
 // disabled 7bit font loading by undefined LOAD_ADAFRUIT_GFX_7BIT
+// disabled by ;-D GFXFF_LOAD_FONTS
+/*
 #ifndef LOAD_GFXFF
 #define LOAD_GFXFF
 #endif
-
+*/
+/*
+undefined in platformio.ini to free up space
+;	-D LOAD_GLCD
+; -D GFXFF_LOAD_FONTS //do not load default fonts (7bit only)
+	-D LOAD_GFXFF
+;	-D SMOOTH_FONT
+*/
 #ifdef LOAD_GFXFF // Only include the fonts if LOAD_GFXFF is defined in User_Setup.h
 
     // Use these when printing or drawing text in GLCD and high rendering speed fonts
@@ -135,6 +146,30 @@ XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);  // Param 2 - Touch IRQ Pin - interrup
     #define FF14b &FreeMonoBold14pt8b
     #define FF14n &FreeMono14pt8b
     #define FF16b &FreeMonoBold16pt8b
+#else
+
+  typedef struct { // Data stored PER GLYPH
+    uint32_t bitmapOffset;     // Pointer into GFXfont->bitmap
+    uint8_t  width, height;    // Bitmap dimensions in pixels
+    uint8_t  xAdvance;         // Distance to advance cursor (x axis)
+    int8_t   xOffset, yOffset; // Dist from cursor pos to UL corner
+  } GFXglyph;
+
+  typedef struct { // Data stored for FONT AS A WHOLE:
+    uint8_t  *bitmap;      // Glyph bitmaps, concatenated
+    GFXglyph *glyph;       // Glyph array
+    uint16_t  first, last; // ASCII extents
+    uint8_t   yAdvance;    // Newline distance (y axis)
+  } GFXfont;
+
+  #define FF08b &FreeMonoBold8pt8b
+  #define FF10b &FreeMonoBold10pt8b
+  #define FF10  &FreeMono10pt8b
+  #define FF12b &FreeMonoBold12pt8b
+  #define FF12  &FreeMono12pt8b
+  #define FF14b &FreeMonoBold14pt8b
+  #define FF14n &FreeMono14pt8b
+  #define FF16b &FreeMonoBold16pt8b
 
 #endif
 
@@ -191,6 +226,7 @@ String tempStrings[]={"myText1","myText2","myText3","myText4","myText5","myText6
 int currentRow=0;
 int currentScreen=0;
 
+/*
 /// @brief Draw String with spcified vlw font to load from SPIFFS
 /// @param txt text to draw
 /// @param poX position x of upper left 
@@ -226,6 +262,7 @@ int16_t drawString(const char *txt , int32_t poX, int32_t poY, char *fontName){
   int16_t width =  tft.drawString(txt, poX, poY);
   return width;
 }
+*/
 
 // read position of XPT digitizer and corresponding TFT position
 void xptPosition (uint16_t *xptX, uint16_t *xptY, uint8_t *xptZ, uint16_t *tftX, uint16_t *tftY) {
@@ -255,7 +292,7 @@ void xptPosition (uint16_t *xptX, uint16_t *xptY, uint8_t *xptZ, uint16_t *tftX,
 }
 
 void printMsg(String msg){
-    Serial.printf("printMsg: '%s'", msg);
+    Log.verboseln("printMsg: '%s'", msg.c_str());
   tft.drawString(msg, 10, 10 + currentRow * 30, GFXFF);// Print the string name of the font
   currentRow++;
   if (currentRow>6)
@@ -266,7 +303,7 @@ void printMsg(String msg){
 }
 
 void printMsg(String msg, int line){
-    Serial.printf("printMsg: '%s'", msg);
+    Log.verboseln("printMsg: '%s' : msg");
   tft.drawString(msg, 10, 10 + line * 30, GFXFF);// Print the string name of the font
   //tft.setCursor(0,15);
   //tft.print(msg);
@@ -557,19 +594,27 @@ void drawScreen5(){
   setFontNormal();
 }
 
+/// @brief process mqtt messages
+/// @param topic the topic of the mqtt message
+/// @param payload (byte*) the payload of the mqtt message
+/// @param length the length of the payload message
 void mqttCallback(char *topic, byte *payload, unsigned int length) {
-    Serial.print ("Message arrived on Topic:");
-    Serial.println (topic);
+    Log.verboseln ("Message arrived on Topic: : %s", topic);
+    //Log.verboseln (topic);
 
-    // Convert payload to string    
-    String payloadStr = String((char*)payload);
-    String msgStr;
+    String payloadStr;
+    for(int i=0;i<length;i++){
+        payloadStr += (char)payload[i];
+    }
 
     //Benzin
     bool benzinupdate=false;
     std::string cTopic=topic;
-    char chPayload[length+1]; for (int a=0; a<length+1; a++){chPayload[a]='\0';}
+    //char[] of payload(byte*)
+    char chPayload[length+1]; 
+    for (int a=0; a<length+1; a++){chPayload[a]='\0';}
     strncpy(chPayload, (char*)payload, length);
+    //std::string of payload
     std::string cPayload(chPayload);
     
     for (int y=0;y<MAX_BENZIN_PREISE;y++){
@@ -626,11 +671,9 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       }
     }
 
-    for(int i=0;i<length;i++){
-        msgStr += (char)payload[i];
-    }
-    Serial1.print(msgStr);
-    Serial1.println();
+    Log.verboseln("mqttcallback: : %s", payloadStr.c_str());
+//    Serial1.print(msgStr);
+//    Serial1.println();
 
     //assign text lines?
     String topicS="";
@@ -640,35 +683,36 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     if (topicS.indexOf("zigbee")>0){
       //process zigbee comment, temperature, humidity
       //ie mqttGenericBridge/zigbee/zigbee_0xa4c1389ca963dfc0/humidity temperature, comment
-      zigbeeType zType = zigbee_thermo::getType(topicS.c_str(), msgStr.c_str());
+      zigbeeType zType = zigbee_thermo::getType(topicS.c_str(), payloadStr.c_str());
       
       string n=zigbee_thermo::getName(cTopic);
-      Serial.printf("\nZigbee mesg '%s' received, type=%i, name='%s'\n", msgStr.c_str(), zType, n.c_str());
+      Log.verboseln("Zigbee mesg '%s' received, type=%i, name='%s'\n", payloadStr.c_str(), zType, n.c_str());
+      //Serial.printf("\nZigbee mesg '%s' received, type=%i, name='%s'\n", msgStr.c_str(), zType, n.c_str());
       zigbee_thermo zb= zb.getItem(n); //zigbee_thermo(n);
       
       switch (zType){
         case temperature:
-          zb.setTemp(atof(msgStr.c_str()));
+          zb.setTemp(atof(payloadStr.c_str()));
           break;
         case humidity:
-          zb.setHumi(atoi(msgStr.c_str()));
+          zb.setHumi(atoi(payloadStr.c_str()));
           break;
         case comment:
-          zb.setText(msgStr.c_str());
+          zb.setText(payloadStr.c_str());
           break;
       }
       zb.putItem(n, zb);
-//DEBUG      Serial.printf("\nZigbee=%s\n", zb.dumpList().c_str());
+      Log.verboseln("Zigbee= : %s", zb.dumpList().c_str());
     }
 
     // shellies/shelly1-ABF975/relay/0
     if (topicS.indexOf("shelly1-ABF975")>0){
-      Serial.printf("\nlichtTerasse1 %s\n", msgStr.c_str());
-      if (msgStr.endsWith("off")){
-        Serial.println("lichtTerasse1 ist OFF");
+      Log.verboseln("lichtTerasse1 : %s", payloadStr.c_str());
+      if (payloadStr.endsWith("off")){
+        Log.verboseln("lichtTerasse1 ist OFF");
         stateLichtTerasse1=false;
       }else{
-        Serial.println("lichtTerasse1 ist ON");
+        Log.verboseln("lichtTerasse1 ist ON");
         stateLichtTerasse1=true;
       }
       try
@@ -678,7 +722,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       }
       catch(const std::exception& e)
       {
-        Serial.println(e.what());
+        Log.errorln("tSwitch.setState : %s", e.what());
       }
       
       return;
@@ -686,12 +730,12 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
 
     // shellies/shellyrgbw2_E4CB31/color/0 Terasse2 RGBW
     if (topicS.indexOf("shellyrgbw2_E4CB31")>0){
-      Serial.printf("\nlichtTerasse2 %s\n", msgStr.c_str());
-      if (msgStr.endsWith("off")){
-        Serial.println("lichtTerasse2 ist OFF");
+      Log.verboseln("lichtTerasse2 %s", payloadStr.c_str());
+      if (payloadStr.endsWith("off")){
+        Log.verboseln("lichtTerasse2 ist OFF");
         stateLichtTerasse2=false;
       }else{
-        Serial.println("lichtTerasse2 ist ON");
+        Log.verboseln("lichtTerasse2 ist ON");
         stateLichtTerasse2=true;
       }
       try
@@ -701,7 +745,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       }
       catch(const std::exception& e)
       {
-        Serial.println(e.what());
+        Log.errorln("tSwitch2.setState : %s", e.what());
       }
       
       return;
@@ -709,11 +753,11 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
 
     // mqttGenericBridge/Licht/lichtVitrine
     if (topicS.indexOf("lichtVitrine")>0){
-      if (msgStr.endsWith("off")){
-        Serial.println("lichtVitrine ist OFF");
+      if (payloadStr.endsWith("off")){
+        Log.verboseln("lichtVitrine ist OFF");
         stateLichtVitrine=false;
       }else{
-        Serial.println("lichtVitrine ist ON");
+        Log.verboseln("lichtVitrine ist ON");
         stateLichtVitrine=true;
       }
       try
@@ -723,7 +767,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       }
       catch(const std::exception& e)
       {
-        Serial.println(e.what());
+        Log.errorln("tSwitch3.setState : %s", e.what());
       }
       
       return;
@@ -732,7 +776,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     //fenster schlafzimmer: mqttGenericBridge/HM_5F5A68/state
     //fenster Bad: mqttGenericBridge/HM_58AD5B/state
     if (topicS.indexOf("HM_5F5A68") > 0){
-      if(msgStr.endsWith("open")){
+      if(payloadStr.endsWith("open")){
         //Fenster ist offen
         FensterSchlafzimmer="Schlafz. AUF";
       }
@@ -745,7 +789,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
 
     //fenster Bad: mqttGenericBridge/HM_58AD5B/state
     if (topicS.indexOf("HM_58AD5B") > 0){
-      if(msgStr.endsWith("open")){
+      if(payloadStr.endsWith("open")){
         //Fenster ist offen
         FensterBad="Bad AUF";
       }
@@ -757,7 +801,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     }
 
     if(topicS.indexOf( "clock" )>0){
-        myClockText=msgStr;
+        myClockText=payloadStr;
         myIPText=WiFi.localIP().toString();
         updateClockLine();
     }
@@ -769,9 +813,8 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     int tIndex = String(lastChar).toInt();
     //store string in list
     if (tIndex<=6 && tIndex>0){
-      tempStrings[tIndex-1]=msgStr;
+      tempStrings[tIndex-1]=payloadStr;
       //update text on Screen 1?
-
     }
     if(currentScreen==0){
       //drawScreen0();
@@ -784,26 +827,26 @@ WiFiClient wlanclient;
 PubSubClient mqttClient(wlanclient);
 
 void connectWiFi(){
-    Serial.print("Connecting to Wifi");
+    Log.verboseln("Connecting to Wifi");
 
     WiFi.begin(ssid,passwd);
 
     while(WiFi.status()!=WL_CONNECTED) {
-        Serial.print (".");
+        Log.verbose (".");
         delay(100);
     }
-    Serial.print ("Connected to WiFi AP, Got an IP address :");
-    Serial.print (WiFi.localIP());
+    Log.verbose ("Connected to WiFi AP, Got an IP address : %p", WiFi.localIP());
+    //Serial.print (WiFi.localIP());
 
     mqttClient.setServer ("192.168.0.40",1883);
     mqttClient.setCallback(mqttCallback);
 
     if (mqttClient.connect ("CYD-Client",NULL,NULL))
     {
-        Serial.print ("Connected to MQTT Broker");
+        Log.verboseln ("Connected to MQTT Broker");
     } else {
-        Serial.print("MQTT Broker connection failed");
-        Serial.print (mqttClient.state());
+        Log.verbose("MQTT Broker connection failed");
+        Log.verboseln ("mqtt state %i :", mqttClient.state());
         delay(200);
     }
     mqttClient.subscribe("display1/#");
@@ -822,18 +865,18 @@ void connectWiFi(){
 
 void mqttSendFHEMcmnd(String cmnd){
   //state in mqtt fhem/licht_terasse1
-  Serial.printf("\nmqttSendFHEMcmnd '%s'\n",cmnd.c_str());
+  Log.verboseln("mqttSendFHEMcmnd : '%s'",cmnd.c_str());
   if (mqttClient.connected()){
-    Serial.println("mqttClient connected send FHEM cmnd");
+    Log.verboseln("mqttClient connected send FHEM cmnd");
     mqttClient.publish("fhem/cmnd", cmnd.c_str(), true);
   }
   else{
     bool bRes = mqttClient.connect("cyd");
     if(bRes){
-      Serial.println("mqttClient connected2 send FHEM cmnd");
+      Log.verboseln("mqttClient connected2 send FHEM cmnd");
       mqttClient.publish("fhem/cmnd", cmnd.c_str(), true);
     }else{
-      Serial.println("mqttClient connect failed");
+      Log.verboseln("mqttClient connect failed");
     }
   }
 }
@@ -842,7 +885,7 @@ void fhemSwitchOnOff(String sDevice, bool OnOff){
   //String msg="set shelly1_Terasse on";
   String sOnOff=OnOff?" on":" off";
   String msg="set " + sDevice + sOnOff;
-  Serial.print(msg);
+  Log.verboseln("fhemSwitchOnOff : %s", msg.c_str());
   mqttSendFHEMcmnd(msg);
 }
     
@@ -850,7 +893,7 @@ int get_LDR(){
   pinMode(LDR_PIN, INPUT);
   analogSetAttenuation(ADC_0db);
   int value=analogRead(LDR_PIN);
-  Serial.printf("\nLDR is %i\n");
+  Log.verboseln("LDR is : %i", value);
   return value;
 }
 
@@ -863,11 +906,13 @@ void setup(void) {
 
   Serial.begin (115200);
 
+  Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+
   tft.begin();
   
   utils::set_BL(50);
 
-  utils::led(0,100,0,false);
+  utils::led(0,25,0,false);
 
   tft.setRotation(1);
 
@@ -911,9 +956,14 @@ bool toggleSwitch(toggle_switch* tsw){
     return false;
   //only toggle if time elapsed...
   bool currState=tsw->getState();
-  Serial.printf("\ntoggleSwitch: state=%i\n", currState);
+
+  //TODO rewrite serial.print to Log.verbose...etc  
+  Log.verbose("\ntoggleSwitch: state=%i" CR, currState);
+  //Serial.printf("\ntoggleSwitch: state=%i\n", currState);
+
   if((millis()-lastDebounceTime)> DEBOUNCE_DELAY){
-    Serial.printf("\ntoggleSwitch: time OK: %i\n", lastDebounceTime);
+    Log.verboseln("toggleSwitch: time OK : %i", lastDebounceTime);
+//    Serial.printf("\ntoggleSwitch: time OK: %i\n", lastDebounceTime);
     lastDebounceTime=millis();
     bool newState = tsw->toggle();
     if(newState){
@@ -924,7 +974,8 @@ bool toggleSwitch(toggle_switch* tsw){
     } 
   }
   else{
-    Serial.printf("\ntoggleSwitch: time not OK!: %i\n", lastDebounceTime);
+    Log.verboseln("toggleSwitch: time not OK! : %i",lastDebounceTime);
+    //Serial.printf("\ntoggleSwitch: time not OK!: %i\n", lastDebounceTime);
   }
   return currState;
 
@@ -961,36 +1012,37 @@ void loop() {
   if(xpt.touched()){
     // get position for XPT digitizer and TFT
     xptPosition (&xptX, &xptY, &xptZ, &tftX, &tftY);
-    Serial.printf("currenScreen=%i\n", currentScreen);
+    Log.verboseln("currenScreen= : %i", currentScreen);
+    //Serial.printf("currenScreen=%i\n", currentScreen);
     if(currentScreen==1){
         if (tSwitch.contains(tftX, tftY)){
-          Serial.println("Toggle Switch hit");
+          Log.verboseln("Toggle Switch hit");
           toggleSwitch(&tSwitch);          
         }
         if (tSwitch2.contains(tftX, tftY)){
-          Serial.println("Toggle Switch2 hit");
+          Log.verboseln("Toggle Switch2 hit");
           toggleSwitch(&tSwitch2);          
         }
         if (tSwitch3.contains(tftX, tftY)){
-          Serial.println("Toggle Switch3 hit");
+          Log.verboseln("Toggle Switch3 hit");
           toggleSwitch(&tSwitch3);          
         }
     }
     if(currentScreen==4){
       if(button1.contains(tftX,tftY)){
-        Serial.println("Button1 hit");
+        Log.verboseln("Button1 hit");
         utils::set_BL(25);
       }
       if(button2.contains(tftX,tftY)){
-        Serial.println("Button2 hit");
+        Log.verboseln("Button2 hit");
         utils::set_BL(50);
       }
       if(button3.contains(tftX,tftY)){
-        Serial.println("Button2 hit");
+        Log.verboseln("Button2 hit");
         utils::set_BL(75);
       }
       if(button4.contains(tftX,tftY)){
-        Serial.println("Button2 hit");
+        Log.verboseln("Button2 hit");
         utils::set_BL(100);
       }
     }
@@ -1011,10 +1063,11 @@ void loop() {
           if (i < 0)
             i=0;
         }
-        Serial.printf("\nscreen switch to %i\n",i);
+        Log.verboseln("screen switch to : %i", i);
+        //Serial.printf("\nscreen switch to %i\n",i);
         (*draw_screen[i])();  // screens 1 to x, i is 0 to x-1
       }
   }
-  Serial.printf("touch at %i / %i with pressure %i\n", tftX, tftY,xptZ); 
+  Log.verboseln("touch at %i / %i with pressure %i", tftX, tftY,xptZ); 
   }
 }
