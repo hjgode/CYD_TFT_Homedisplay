@@ -1,4 +1,5 @@
 #include "toggle_switch.h"
+#include <ArduinoLog.h>
 
 toggle_switch::toggle_switch(void){
   currstate = false;
@@ -80,10 +81,10 @@ bool toggle_switch::isClicked(){
 }
 
 bool toggle_switch::contains(int16_t x, int16_t y) {
-    Serial.printf("Contains: x=%i, _x=%i, x2=%i, y=%i, y2=%i\n", x, _x, _x+_w, y, _y+_h);
+  Log.verbose("Contains: x=%i, _x=%i, x2=%i, y=%i, y2=%i\n", x, _x, _x+_w, y, _y+_h);
   uint16_t xTest=(x >= _x) && (x < (_x + _w));
   uint16_t yTest=(y >= _y) && (y < (_y + _h));
-  Serial.printf("xTest=%i, yTest=%i\n", xTest, yTest);
+  Log.verbose("xTest=%i, yTest=%i\n", xTest, yTest);
   bool bcontains=false;
   if (xTest>0 && yTest>0)
     bcontains=true;

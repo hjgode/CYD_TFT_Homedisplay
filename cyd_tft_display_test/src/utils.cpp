@@ -1,6 +1,8 @@
 #include "utils.h"
 #include <driver/ledc.h>
 #include <Preferences.h>
+#include <ArduinoLog.h>
+
 Preferences prefs;
 
 std::string utils::printHeap(){
@@ -65,7 +67,7 @@ void utils::set_BL(uint8_t brightness=50){
     // Prepare and then apply the LEDC PWM channel configuration
     err=ledc_timer_config(&ledc_timer);
     if (err != ESP_OK)
-      Serial.println("ledc_timer_config FAILD"); 
+      Log.errorln("ledc_timer_config FAILD"); 
 
     ledc_channel_config_t ledc_channel = {
         .gpio_num       = TFT_BL,
@@ -80,7 +82,7 @@ void utils::set_BL(uint8_t brightness=50){
 //   ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
     err = ledc_channel_config(&ledc_channel);
     if (err != ESP_OK)
-      Serial.println("ledc_channel_config FAILD"); 
+      Log.errorln("ledc_channel_config FAILD"); 
        // Set duty to 50%
     uint32_t duty = 8192;
     if (brightness<0)
@@ -98,16 +100,16 @@ void utils::set_BL(uint8_t brightness=50){
  //    ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty));
     err = ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty);
     if (err != ESP_OK)
-      Serial.println("ledc_set_duty FAILD"); 
+      Log.errorln("ledc_set_duty FAILD"); 
     else
-      Serial.printf("\nduty cycle set to %i\n", duty);
+      Log.verbose("\nduty cycle set to %i\n", duty);
     //(4096) // Set duty to 50%. (2 ** 13) * 50% = 4096
 
     // Update duty to apply the new value
     //ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
     err=ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
     if (err != ESP_OK)
-      Serial.println("ledc_update_duty FAILD");
+      Log.errorln("ledc_update_duty FAILD");
 
     prefs.begin("cyd_home", false);
     if(prefs.isKey("brightness")){

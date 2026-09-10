@@ -1,5 +1,6 @@
 //mybutton.cpp
 #include "mybutton.h"
+#include <ArduinoLog.h>
 
 // example
 // initButton(tft, 28, 36,80, 28)
@@ -46,7 +47,7 @@ void myButton::drawButton(String text){
   uint16_t xTxt, yTxt; // differenz wzischen innen und aussen
   xTxt = (_w-tWidth)/2 + _x;
   yTxt = (_h-tHeight)/2 + _y;
-  Serial.printf("\nText width %i\nFont Height %i\n", tWidth, tHeight);
+  Log.verbose("\nText width %i\nFont Height %i\n", tWidth, tHeight);
   _gfx->drawString(text, xTxt, yTxt);
   
 }

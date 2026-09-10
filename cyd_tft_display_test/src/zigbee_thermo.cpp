@@ -1,6 +1,7 @@
 //sigbee thermo class
 
 #include "zigbee_thermo.h"
+#include <ArduinoLog.h>
 
 static zigbee_liste _liste;
 
@@ -29,7 +30,7 @@ string zigbee_thermo::getName(string topic){
     string x="zigbee_0xa4c1389ca963dfc0";
     int leng = x.length();
     string n = topic.substr(pos, leng);
-    Serial.printf("\ntopic: %s, pos=%i, name=%s\n", topic.c_str(), pos, n.c_str());
+    Log.verboseln("topic: %s, pos=%i, name=%s", topic.c_str(), pos, n.c_str());
     return n;
 }
 

@@ -353,7 +353,7 @@ void drawFooter(){
   setFontSmall();
   int i=7;
   tft.drawRect(10, 10+i*30, 240-10, 30,TFT_BLACK); //clear background
-  char *fName=(char *)"FreeMono12";
+//  char *fName=(char *)"FreeMono12";
 //  drawString(myIPText.c_str(), 10, 10 + i * 30, fName);
 //  drawString(myClockText.c_str(), 160, 10 + i * 30, fName);
   tft.drawString(myIPText, 10, 10 + i * 30, GFXFF);// Print the string name of the font
