@@ -17,22 +17,6 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-/*
-// In setup()
-  if (!SPIFFS.begin()) {
-    Serial.println("SPIFFS initialisation failed!");
-    while (1) yield(); // Stay here twiddling thumbs waiting
-  }
-  Serial.println("\r\nSPIFFS available!");
-
-if (SPIFFS.begin()) {
-  if (SPIFFS.exists("/NotoSansBold15.vlw") == false) 
-     Serial.print("font_missing")";
-  else
-    tft.loadFont("FreeMono8");  // Load font from SPIFFS
-}
-*/
-
 //some graphics
 // see https://palsayantan.github.io/Image-to-RGB565/
 // converted from svg using inkscape, save as 30x30 pixel png and uploaded, use 32bit RGBA
@@ -65,7 +49,8 @@ uint8_t xptZ;
 #include "zigbee_thermo.h"
 #include "ProgressBar.h"
 
-//#include "ringmeter.h"
+#include "meter_ring.h"
+
 #include "toggle_switch.h"
 toggle_switch tSwitch;
 toggle_switch tSwitch2;
@@ -292,7 +277,7 @@ void xptPosition (uint16_t *xptX, uint16_t *xptY, uint8_t *xptZ, uint16_t *tftX,
 }
 
 void printMsg(String msg){
-    Log.verboseln("printMsg: '%s'", msg.c_str());
+    Log.infoln("printMsg: '%s'", msg.c_str());
   tft.drawString(msg, 10, 10 + currentRow * 30, GFXFF);// Print the string name of the font
   currentRow++;
   if (currentRow>6)
@@ -303,7 +288,7 @@ void printMsg(String msg){
 }
 
 void printMsg(String msg, int line){
-    Log.verboseln("printMsg: '%s' : msg");
+    Log.infoln("printMsg: '%s' : msg");
   tft.drawString(msg, 10, 10 + line * 30, GFXFF);// Print the string name of the font
   //tft.setCursor(0,15);
   //tft.print(msg);
@@ -561,11 +546,15 @@ void drawScreen4(){
   text_TempHumi thValue(tft, 12, 180, 80, 30, "TEST", 35.0, 55, TFT_BLACK, TFT_WHITE, FF10, FF14b);
   thValue.drawText();
 
+  meterRing ringM=meterRing(&tft, FF12b);
+  ringM.drawRing(24, 0, 40, 170, 10, 40, "°C", (byte)BLUE2RED);
+
   drawFooter();
   currentScreen=4;
   setFontNormal();
 }
 
+/// @brief zigbee screen
 void drawScreen5(){
   //GFXfont *f;
   if (currentScreen==5)
@@ -599,8 +588,8 @@ void drawScreen5(){
 /// @param payload (byte*) the payload of the mqtt message
 /// @param length the length of the payload message
 void mqttCallback(char *topic, byte *payload, unsigned int length) {
-    Log.verboseln ("Message arrived on Topic: : %s", topic);
-    //Log.verboseln (topic);
+    Log.infoln ("Message arrived on Topic: : %s", topic);
+    //Log.infoln (topic);
 
     String payloadStr;
     for(int i=0;i<length;i++){
@@ -671,7 +660,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       }
     }
 
-    Log.verboseln("mqttcallback: : %s", payloadStr.c_str());
+    Log.infoln("mqttcallback: : %s", payloadStr.c_str());
 //    Serial1.print(msgStr);
 //    Serial1.println();
 
@@ -686,7 +675,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       zigbeeType zType = zigbee_thermo::getType(topicS.c_str(), payloadStr.c_str());
       
       string n=zigbee_thermo::getName(cTopic);
-      Log.verboseln("Zigbee mesg '%s' received, type=%i, name='%s'\n", payloadStr.c_str(), zType, n.c_str());
+      Log.infoln("Zigbee mesg '%s' received, type=%i, name='%s'\n", payloadStr.c_str(), zType, n.c_str());
       //Serial.printf("\nZigbee mesg '%s' received, type=%i, name='%s'\n", msgStr.c_str(), zType, n.c_str());
       zigbee_thermo zb= zb.getItem(n); //zigbee_thermo(n);
       
@@ -702,17 +691,17 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
           break;
       }
       zb.putItem(n, zb);
-      Log.verboseln("Zigbee= : %s", zb.dumpList().c_str());
+      Log.infoln("Zigbee= : %s", zb.dumpList().c_str());
     }
 
     // shellies/shelly1-ABF975/relay/0
     if (topicS.indexOf("shelly1-ABF975")>0){
-      Log.verboseln("lichtTerasse1 : %s", payloadStr.c_str());
+      Log.infoln("lichtTerasse1 : %s", payloadStr.c_str());
       if (payloadStr.endsWith("off")){
-        Log.verboseln("lichtTerasse1 ist OFF");
+        Log.infoln("lichtTerasse1 ist OFF");
         stateLichtTerasse1=false;
       }else{
-        Log.verboseln("lichtTerasse1 ist ON");
+        Log.infoln("lichtTerasse1 ist ON");
         stateLichtTerasse1=true;
       }
       try
@@ -730,12 +719,12 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
 
     // shellies/shellyrgbw2_E4CB31/color/0 Terasse2 RGBW
     if (topicS.indexOf("shellyrgbw2_E4CB31")>0){
-      Log.verboseln("lichtTerasse2 %s", payloadStr.c_str());
+      Log.infoln("lichtTerasse2 %s", payloadStr.c_str());
       if (payloadStr.endsWith("off")){
-        Log.verboseln("lichtTerasse2 ist OFF");
+        Log.infoln("lichtTerasse2 ist OFF");
         stateLichtTerasse2=false;
       }else{
-        Log.verboseln("lichtTerasse2 ist ON");
+        Log.infoln("lichtTerasse2 ist ON");
         stateLichtTerasse2=true;
       }
       try
@@ -754,10 +743,10 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     // mqttGenericBridge/Licht/lichtVitrine
     if (topicS.indexOf("lichtVitrine")>0){
       if (payloadStr.endsWith("off")){
-        Log.verboseln("lichtVitrine ist OFF");
+        Log.infoln("lichtVitrine ist OFF");
         stateLichtVitrine=false;
       }else{
-        Log.verboseln("lichtVitrine ist ON");
+        Log.infoln("lichtVitrine ist ON");
         stateLichtVitrine=true;
       }
       try
@@ -827,15 +816,15 @@ WiFiClient wlanclient;
 PubSubClient mqttClient(wlanclient);
 
 void connectWiFi(){
-    Log.verboseln("Connecting to Wifi");
+    Log.infoln("Connecting to Wifi");
 
     WiFi.begin(ssid,passwd);
 
     while(WiFi.status()!=WL_CONNECTED) {
-        Log.verbose (".");
+        Log.info (".");
         delay(100);
     }
-    Log.verbose ("Connected to WiFi AP, Got an IP address : %p", WiFi.localIP());
+    Log.info ("Connected to WiFi AP, Got an IP address : %p", WiFi.localIP());
     //Serial.print (WiFi.localIP());
 
     mqttClient.setServer ("192.168.0.40",1883);
@@ -843,10 +832,10 @@ void connectWiFi(){
 
     if (mqttClient.connect ("CYD-Client",NULL,NULL))
     {
-        Log.verboseln ("Connected to MQTT Broker");
+        Log.infoln ("Connected to MQTT Broker");
     } else {
-        Log.verbose("MQTT Broker connection failed");
-        Log.verboseln ("mqtt state %i :", mqttClient.state());
+        Log.info("MQTT Broker connection failed");
+        Log.infoln ("mqtt state %i :", mqttClient.state());
         delay(200);
     }
     mqttClient.subscribe("display1/#");
@@ -861,22 +850,23 @@ void connectWiFi(){
     // #zigbee devices
     // mqttGenericBridge/zigbee/zigbee_0xa4c1386fbb4a56db temperature, humidity, comment
     mqttClient.subscribe("mqttGenericBridge/zigbee/#");
-    mqttClient.subscribe("mqttGenericBridge/Licht/#");}
+    mqttClient.subscribe("mqttGenericBridge/Licht/#");
+}
 
 void mqttSendFHEMcmnd(String cmnd){
   //state in mqtt fhem/licht_terasse1
-  Log.verboseln("mqttSendFHEMcmnd : '%s'",cmnd.c_str());
+  Log.infoln("mqttSendFHEMcmnd : '%s'",cmnd.c_str());
   if (mqttClient.connected()){
-    Log.verboseln("mqttClient connected send FHEM cmnd");
+    Log.infoln("mqttClient connected send FHEM cmnd");
     mqttClient.publish("fhem/cmnd", cmnd.c_str(), true);
   }
   else{
     bool bRes = mqttClient.connect("cyd");
     if(bRes){
-      Log.verboseln("mqttClient connected2 send FHEM cmnd");
+      Log.infoln("mqttClient connected2 send FHEM cmnd");
       mqttClient.publish("fhem/cmnd", cmnd.c_str(), true);
     }else{
-      Log.verboseln("mqttClient connect failed");
+      Log.infoln("mqttClient connect failed");
     }
   }
 }
@@ -885,7 +875,7 @@ void fhemSwitchOnOff(String sDevice, bool OnOff){
   //String msg="set shelly1_Terasse on";
   String sOnOff=OnOff?" on":" off";
   String msg="set " + sDevice + sOnOff;
-  Log.verboseln("fhemSwitchOnOff : %s", msg.c_str());
+  Log.infoln("fhemSwitchOnOff : %s", msg.c_str());
   mqttSendFHEMcmnd(msg);
 }
     
@@ -893,7 +883,7 @@ int get_LDR(){
   pinMode(LDR_PIN, INPUT);
   analogSetAttenuation(ADC_0db);
   int value=analogRead(LDR_PIN);
-  Log.verboseln("LDR is : %i", value);
+  Log.infoln("LDR is : %i", value);
   return value;
 }
 
@@ -906,7 +896,7 @@ void setup(void) {
 
   Serial.begin (115200);
 
-  Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+  Log.begin(LOG_LEVEL_INFO, &Serial);
 
   tft.begin();
   
@@ -957,12 +947,12 @@ bool toggleSwitch(toggle_switch* tsw){
   //only toggle if time elapsed...
   bool currState=tsw->getState();
 
-  //TODO rewrite serial.print to Log.verbose...etc  
-  Log.verbose("\ntoggleSwitch: state=%i" CR, currState);
+  //TODO rewrite serial.print to Log.info...etc  
+  Log.info("\ntoggleSwitch: state=%i" CR, currState);
   //Serial.printf("\ntoggleSwitch: state=%i\n", currState);
 
   if((millis()-lastDebounceTime)> DEBOUNCE_DELAY){
-    Log.verboseln("toggleSwitch: time OK : %i", lastDebounceTime);
+    Log.infoln("toggleSwitch: time OK : %i", lastDebounceTime);
 //    Serial.printf("\ntoggleSwitch: time OK: %i\n", lastDebounceTime);
     lastDebounceTime=millis();
     bool newState = tsw->toggle();
@@ -974,7 +964,7 @@ bool toggleSwitch(toggle_switch* tsw){
     } 
   }
   else{
-    Log.verboseln("toggleSwitch: time not OK! : %i",lastDebounceTime);
+    Log.infoln("toggleSwitch: time not OK! : %i",lastDebounceTime);
     //Serial.printf("\ntoggleSwitch: time not OK!: %i\n", lastDebounceTime);
   }
   return currState;
@@ -1012,37 +1002,37 @@ void loop() {
   if(xpt.touched()){
     // get position for XPT digitizer and TFT
     xptPosition (&xptX, &xptY, &xptZ, &tftX, &tftY);
-    Log.verboseln("currenScreen= : %i", currentScreen);
+    Log.infoln("currenScreen= : %i", currentScreen);
     //Serial.printf("currenScreen=%i\n", currentScreen);
     if(currentScreen==1){
         if (tSwitch.contains(tftX, tftY)){
-          Log.verboseln("Toggle Switch hit");
+          Log.infoln("Toggle Switch hit");
           toggleSwitch(&tSwitch);          
         }
         if (tSwitch2.contains(tftX, tftY)){
-          Log.verboseln("Toggle Switch2 hit");
+          Log.infoln("Toggle Switch2 hit");
           toggleSwitch(&tSwitch2);          
         }
         if (tSwitch3.contains(tftX, tftY)){
-          Log.verboseln("Toggle Switch3 hit");
+          Log.infoln("Toggle Switch3 hit");
           toggleSwitch(&tSwitch3);          
         }
     }
     if(currentScreen==4){
       if(button1.contains(tftX,tftY)){
-        Log.verboseln("Button1 hit");
+        Log.infoln("Button1 hit");
         utils::set_BL(25);
       }
       if(button2.contains(tftX,tftY)){
-        Log.verboseln("Button2 hit");
+        Log.infoln("Button2 hit");
         utils::set_BL(50);
       }
       if(button3.contains(tftX,tftY)){
-        Log.verboseln("Button2 hit");
+        Log.infoln("Button2 hit");
         utils::set_BL(75);
       }
       if(button4.contains(tftX,tftY)){
-        Log.verboseln("Button2 hit");
+        Log.infoln("Button2 hit");
         utils::set_BL(100);
       }
     }
@@ -1063,7 +1053,7 @@ void loop() {
           if (i < 0)
             i=0;
         }
-        Log.verboseln("screen switch to : %i", i);
+        Log.infoln("screen switch to : %i", i);
         //Serial.printf("\nscreen switch to %i\n",i);
         (*draw_screen[i])();  // screens 1 to x, i is 0 to x-1
       }
