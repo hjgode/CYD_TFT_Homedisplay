@@ -1,14 +1,30 @@
 #include "meter_ring.h"
 #include <ArduinoLog.h>
 
+    meterRing::meterRing(TFT_eSPI * tft, const GFXfont * font1 ){
+        _tft=tft;
+        _font1=font1;
+        initDone=false;
+    }
+    void meterRing::updateValue(int val){
+        if (! initDone)
+            return;
+        drawRing(val, _vmin, _vmax, _x,_y,_r,_einheit,_colorset);
+    }
     // #########################################################################
     //  Draw the meter on the screen, returns x coord of righthand side
     // #########################################################################
-
     int meterRing::drawRing(int value, int vmin, int vmax, int x, int y, int r, std::string einheit, byte colorset)
     {
         TFT_eSPI *tft=meterRing::_tft;
         _tft->setFreeFont(_font1);
+        _vmin=vmin; _vmax=vmax;
+        _x=x;_y=y; _r=r;
+        _einheit=einheit;
+        _colorset=colorset;
+
+        initDone=true;
+
         // Minimum value of r is about 52 before value text intrudes on ring
         // drawing the text first is an option
         
