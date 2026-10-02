@@ -855,16 +855,17 @@ void connectWiFi(){
 
 void mqttSendFHEMcmnd(String cmnd){
   //state in mqtt fhem/licht_terasse1
+  bool bRetain = false; //do not reatin cmns, or they will be executed again and again!
   Log.infoln("mqttSendFHEMcmnd : '%s'",cmnd.c_str());
   if (mqttClient.connected()){
     Log.infoln("mqttClient connected send FHEM cmnd");
-    mqttClient.publish("fhem/cmnd", cmnd.c_str(), true);
+    mqttClient.publish("fhem/cmnd", cmnd.c_str(), bRetain);
   }
   else{
     bool bRes = mqttClient.connect("cyd");
     if(bRes){
       Log.infoln("mqttClient connected2 send FHEM cmnd");
-      mqttClient.publish("fhem/cmnd", cmnd.c_str(), true);
+      mqttClient.publish("fhem/cmnd", cmnd.c_str(), bRetain);
     }else{
       Log.infoln("mqttClient connect failed");
     }
@@ -896,7 +897,8 @@ void setup(void) {
 
   Serial.begin (115200);
 
-  Log.begin(LOG_LEVEL_INFO, &Serial);
+  //Log.begin(LOG_LEVEL_INFO, &Serial);
+  Log.begin(LOG_LEVEL_ERROR, &Serial);
 
   tft.begin();
   
