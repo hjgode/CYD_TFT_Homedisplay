@@ -365,8 +365,8 @@ void drawScreen0(){
 
 void drawScreen1(){
   int iLine=0, iLineSpace=40, iOffsetY=12;
-  if (currentScreen==1)
-    return;
+//  if (currentScreen==1)
+//    return;
   tft.fillScreen(TFT_BLACK);
   setFontNormal();
   tft.setTextColor(TFT_WHITE);
@@ -377,7 +377,7 @@ void drawScreen1(){
 //  toggle_switch tSwitch;
   tSwitch.initSwitch(&tft, 260, iLine*iLineSpace+iOffsetY, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
   tSwitch.setFHEMdevice("shelly1_Terasse");
-  tSwitch2.setState(stateLichtTerasse1);
+  tSwitch.setState(stateLichtTerasse1);
   tSwitch.drawButton(stateLichtTerasse1);
 
   iLine++;
@@ -694,8 +694,10 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
       Log.infoln("Zigbee= : %s", zb.dumpList().c_str());
     }
 
-    // shellies/shelly1-ABF975/relay/0
-    if (topicS.indexOf("shelly1-ABF975")>0){
+    //TODO: Does nt reflect state of shelly1
+    // shellies/shelly1-ABF975/relay/0    lichtterasse1
+    //neu: mqttGenericBridge/display1/licht_terasse
+    if (topicS.indexOf("licht_terasse")>0){
       Log.infoln("lichtTerasse1 : %s", payloadStr.c_str());
       if (payloadStr.endsWith("off")){
         Log.infoln("lichtTerasse1 ist OFF");
@@ -741,7 +743,8 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     }
 
     // mqttGenericBridge/Licht/lichtVitrine
-    if (topicS.indexOf("lichtVitrine")>0){
+    //neu: mqttGenericBridge/Licht/licht_vitrine
+    if (topicS.indexOf("licht_vitrine")>0){
       if (payloadStr.endsWith("off")){
         Log.infoln("lichtVitrine ist OFF");
         stateLichtVitrine=false;
@@ -839,7 +842,7 @@ void connectWiFi(){
         delay(200);
     }
     mqttClient.subscribe("display1/#");
-    mqttClient.subscribe("shellies/shelly1-ABF975/relay/0"); ////licht_terasse1
+    //mqttClient.subscribe("shellies/shelly1-ABF975/relay/0"); ////licht_terasse1
     mqttClient.subscribe("shellies/shellyrgbw2_E4CB31/color/0"); //shellyrgbw2_terasse2
     //fenster schlafzimmer
     mqttClient.subscribe("mqttGenericBridge/HM_5F5A68/state");

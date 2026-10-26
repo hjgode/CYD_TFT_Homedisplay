@@ -10,6 +10,10 @@
 		{
 			"name": "cyd_tft_display_test",
 			"path": "."
+		},
+		{
+			"name": "analog_clock",
+			"path": "../../../Documents/PlatformIO/Projects/analog_clock"
 		}
 	],
 	"settings": {}
