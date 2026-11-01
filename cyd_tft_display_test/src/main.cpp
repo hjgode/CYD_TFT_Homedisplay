@@ -37,6 +37,10 @@ std::string stromtopics[3]={"Power","DayAktuell","DayLast"};
 std::string wassertexte[2];
 std::string wassertopics[2]={"WasserAktuell","WasserLast"};
 
+const char *shellyRGBW_setTopic = "shellies/shellyrgbw2_E4CB31/color/0/set";
+const char *shellyRGBW_on="{'mode': 'color', 'red': 0, 'green': 0, 'blue': 0, 'gain': 100, 'white': 127, 'effect': 0, 'turn': 'on', 'transition': 500}";
+const char *shellyRGBW_off="{'mode': 'color', 'red': 0, 'green': 0, 'blue': 0, 'gain': 100, 'white': 127, 'effect': 0, 'turn': 'off', 'transition': 500}";
+
 // Use hardware SPI
 TFT_eSPI tft = TFT_eSPI();
 
@@ -385,7 +389,8 @@ void drawScreen1(){
 //  tft.print("Terrasse 2");
   tft.drawString("Terasse 2", 10, iLine*iLineSpace+iOffsetY);
   tSwitch2.initSwitch(&tft, 260, iLine*iLineSpace+iOffsetY, 50, 20, TFT_WHITE, TFT_WHITE, TFT_BLUE);
-  tSwitch2.setFHEMdevice("shellyrgbw2_terasse2");
+  tSwitch2.setFHEMdevice("licht_terasse2"); //("shellyrgbw2_terasse2");
+  // we dont use shelly mqtt interface to publish, shellyRGBW_off, shellyRGBW_on and shellyRGBW_setTopic
   tSwitch2.setState(stateLichtTerasse2);
   tSwitch2.drawButton(stateLichtTerasse2);
 
